@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ARMADA — a playable paper</title>
+<meta name="description" content="A one-screen game about Contesting the PRC’s Fishing Armada (J.R. Williamson, DARC, 2025): run Peru’s response to a distant-water fishing fleet it can’t board.">
+<meta name="theme-color" content="#0B2545">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="ARMADA">
+<meta property="og:type" content="website"><meta property="og:title" content="ARMADA — a playable paper"><meta property="og:description" content="A thousand ships you can’t touch, and six you can send. Run Peru’s response to a distant-water fishing fleet it can’t board.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B2545'/%3E%3Cpath d='M6 20h20l-3 5H9z' fill='%23FFB400'/%3E%3Cpath d='M15 6v13h-7z' fill='%23FFF8EA'/%3E%3C/svg%3E">
+<style>
+  :root{--navy:#0B2545;--amber:#FFB400;--red:#D8322B;--mint:#3DDC97;--paper:#FFF8EA;--dim:#5b6b80;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-webkit-text-size-adjust:100%;margin:0;height:100%;background:#0d2a4a;color:var(--navy);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;overscroll-behavior:none}
+  svg#ov{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  svg#map{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  canvas#m{position:fixed;inset:0;background:transparent;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+  .top{position:fixed;top:0;left:0;right:0;z-index:5;background:rgba(11,37,69,.94);color:#fff;padding:calc(var(--sat) + 4px) 10px 6px}
+  .row{display:flex;align-items:center;gap:8px;height:40px}
+  .btn{height:36px;min-width:40px;padding:0 10px;border:2px solid rgba(255,255,255,.45);color:#fff;background:transparent;font:inherit;font-weight:800;font-size:14px;border-radius:10px}
+  #clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;min-width:44px}
+  .sp{flex:1}
+  #budget{font-variant-numeric:tabular-nums;font-weight:900;font-size:15px} #budget small{font-size:10px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.06em;margin-right:4px}
+  #bj{display:flex;gap:3px;align-items:center} #bj i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4)} #bj i.on{background:#FF8C42;border-color:#FF8C42}
+  #lom{flex:1.2;min-height:58px;border:2px solid var(--navy);border-radius:14px;background:#555;color:#fff;font:inherit;font-weight:900;font-size:12.5px;letter-spacing:.3px;box-shadow:0 4px 0 var(--navy);opacity:.45;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:0 8px} #lom small{font-size:9.5px;font-weight:800;color:#cfd4dc;letter-spacing:0} #lom.ready{opacity:1;background:#1b1b1b;animation:pulse .7s infinite alternate}
+  @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.04);box-shadow:0 4px 0 var(--navy),0 0 16px var(--amber)}}
+  .bars{display:grid;grid-template-columns:62px 1fr;gap:4px 8px;align-items:center;margin-top:3px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+  .bar{position:relative;height:8px;border-radius:5px;background:rgba(255,255,255,.16)}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;width:100%;transition:width .15s}
+  #fbar i{background:#8fd3ff} #fbar.low i{background:#FF4B4B} #pbar i{background:#E0A52E}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--paper);border-top:3px solid var(--navy);padding:8px 10px calc(var(--sab) + 10px);display:flex;flex-direction:column;gap:8px}
+  .btns{display:flex;gap:8px} .tb{flex:1;min-height:58px;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);font:inherit;font-weight:900;font-size:14px;box-shadow:0 3px 0 var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px} .tb small{font-size:11.5px;font-weight:700;color:#4a5a70} .tb.on{background:#dff0ff} .tb .fb{display:block;width:70%;height:4px;background:#e3e7ee;border-radius:2px} .tb .fb i{display:block;height:4px;border-radius:2px;background:#4F8FD6;width:100%}
+  .hint{font-size:14px;min-height:36px;font-weight:700;line-height:1.25;color:var(--navy);min-height:17px} .hint b{color:var(--red)}
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:10;background:rgba(6,26,51,.5)} .overlay.hidden{display:none}
+  .card{background:var(--paper);border:3px solid var(--navy);border-radius:18px;box-shadow:0 8px 0 var(--navy);max-width:420px;width:100%;padding:20px;max-height:90vh;overflow:auto}
+  .card .k{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#7a6a45;margin-bottom:6px}
+  .card h1{margin:0 0 8px;font-size:40px;line-height:1;font-weight:900;letter-spacing:-1px}
+  .card h2{margin:0 0 8px;font-size:22px;font-weight:900}
+  .card p{margin:0 0 10px;font-size:15px;line-height:1.4;font-weight:600}
+  .card ul{margin:0 0 12px;padding-left:18px;font-size:14.5px;line-height:1.4;font-weight:600} .card li{margin-bottom:6px}
+  .stamp{display:inline-block;border:3px solid var(--red);color:var(--red);border-radius:8px;padding:3px 9px;font-weight:900;font-size:13px;letter-spacing:1.5px;transform:rotate(-3deg);margin-bottom:10px} .stamp.ok{border-color:#1f8f5f;color:#1f8f5f}
+  .go{border:2px solid var(--navy);background:var(--mint);border-radius:12px;padding:12px 20px;font:inherit;font-weight:900;font-size:16px;box-shadow:0 4px 0 var(--navy);color:var(--navy)} .go.alt{background:#fff}
+  .knob{display:grid;grid-template-columns:1fr 110px 44px;gap:6px 10px;align-items:center;font-size:13px;font-weight:700;margin-bottom:6px} .knob input{width:100%} .knob b{font-variant-numeric:tabular-nums;text-align:right}
+  #side{display:none;pointer-events:none;position:fixed;left:6px;z-index:4;width:104px;display:flex;flex-direction:column;gap:5px;font-size:10px;color:#fff}
+  .sc{pointer-events:auto;background:rgba(11,37,69,.72);border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:4px 6px;line-height:1.2} .sc b{font-size:10.5px;letter-spacing:.3px} .sc small{color:rgba(255,255,255,.7);display:block;font-size:9.5px}
+  .sc.tap{cursor:pointer} .sc.tap:active{background:rgba(61,220,151,.25)}
+  .sc .fuel{height:3px;background:rgba(255,255,255,.18);border-radius:2px;margin-top:3px} .sc .fuel i{display:block;height:3px;border-radius:2px;background:#9fc9ff}
+  .sc.ship{display:flex;flex-direction:column;gap:1px} .sc.ship .st{color:#FFB400;letter-spacing:1px} .sc.ship.listed{border-color:#FF4B4B} .sc.ship .ev{color:#3DDC97}
+  .sc.hdr{background:transparent;border:none;padding:2px 2px 0;color:rgba(255,255,255,.6);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:9px}
+  .lvls{display:flex;flex-direction:column;gap:6px} .lv{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;border:2px solid var(--navy);border-radius:12px;background:#fff;padding:9px 10px;font:inherit;font-weight:800;font-size:15px;color:var(--navy);text-align:left;box-shadow:0 3px 0 var(--navy)} .lv b{font-size:17px} .lv i{font-style:normal;color:#E0A52E;font-size:15px;letter-spacing:1px} .lv.lock{opacity:.45;box-shadow:none} .lv.lock i{color:#7a6a45;font-size:12px;letter-spacing:0}
+  #evt{position:fixed;left:50%;transform:translateX(-50%) translateY(-8px);z-index:6;max-width:86%;background:rgba(11,37,69,.95);color:#fff;border:2px solid #9fc9ff;border-radius:12px;padding:7px 12px;font-size:13.5px;font-weight:700;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;text-align:center} #evt.show{opacity:1;transform:translateX(-50%) translateY(0)} #evt.warn{border-color:#FF8C42}
+html:not(.debug) #kn,html:not(.debug) #ua,html:not(.debug) #kn3,html:not(.debug) #knobbtn,html:not(.debug) .diag{display:none!important}
+.scale{display:block;width:100%;margin:12px 0 4px;padding:14px 16px;border:3px solid var(--navy);border-radius:14px;box-shadow:0 5px 0 var(--navy);text-align:left;font:inherit;color:#fff;cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(100deg,#0B2545 0 55%,#123a66)}
+.scale::after{content:'';position:absolute;top:0;right:0;bottom:0;width:42%;pointer-events:none;-webkit-mask:linear-gradient(90deg,transparent,#000 60%);mask:linear-gradient(90deg,transparent,#000 60%);
+  background:radial-gradient(circle,rgba(255,180,90,.6) 0 2px,transparent 2.6px) 0 0/13px 11px,radial-gradient(circle,rgba(255,215,150,.4) 0 1.4px,transparent 2px) 5px 6px/9px 13px}
+.scale span{position:relative;z-index:1}
+.scale .sk{display:block;font-size:11px;font-weight:800;letter-spacing:1.5px;color:#FFB400;text-transform:uppercase}
+.scale .sh{display:block;font-size:20px;font-weight:900;line-height:1.1;margin:4px 0 2px;text-shadow:0 1px 0 #0B2545}
+.scale .ss{display:block;font-size:13.5px;font-weight:700;opacity:.9}
+.scale .sa{position:absolute;right:14px;bottom:12px;font-size:22px;font-weight:900;color:#FFB400}
+.scale:active{transform:translateY(3px);box-shadow:0 2px 0 var(--navy)}
+.diag{font:600 10px/1.3 ui-monospace,Menlo,monospace;color:#9a8a65;margin:8px 0 0;word-break:break-all}
+/* cards can be swiped away or tapped to dismiss (see game.js); a faint × marks them as dismissible */
+#evt{padding-left:22px;padding-right:22px} #evt.side{padding-left:12px}
+#evt.show{pointer-events:auto;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+#evt .x{position:absolute;top:3px;right:7px;font-style:normal;font-size:14px;line-height:1;opacity:.55}
+/* toast/WHY card placed at the top-left over the sea when the centre positions would cover a base (see placeEvt) */
+#evt.side{left:8px;transform:translateY(-8px);max-width:48%;text-align:left} #evt.side.show{transform:translateY(0)}
+/* compact: short screens under 700 px (iPhone SE, small Android, iPhones with Safari's toolbars) give the map more height */
+html.compact .top{padding:calc(var(--sat) + 2px) 8px 4px} html.compact .row{height:34px} html.compact .btn{height:30px;min-width:34px;font-size:13px} html.compact #clock{font-size:15px}
+html.compact .bars{grid-template-columns:auto 1fr auto 1fr;gap:2px 6px;margin-top:1px;font-size:9px} html.compact .bars span{white-space:nowrap} html.compact .bar{height:6px}
+html.compact .sheet{padding:6px 8px calc(var(--sab) + 6px);gap:6px} html.compact .tb,html.compact #lom{min-height:48px;font-size:13px;border-radius:12px} html.compact .tb small{font-size:10.5px} html.compact #lom small{font-size:9px}
+html.compact .hint{font-size:13px} html.compact #evt{font-size:12.5px;padding:5px 20px} html.compact #evt.side{padding-left:10px}
+/* the menu and gear buttons keep their look but get a touch area of at least 44 x 44 px (they are 40x36, or 34x30 on short screens) */
+.btn{position:relative} .btn::after{content:'';position:absolute;left:-6px;right:-6px;top:-8px;bottom:-8px}
+/* phones held sideways: cover the game with a "turn your phone upright" card (the game pauses underneath; see game.js) */
+#rotate{display:none}
+@media (orientation:landscape) and (max-height:500px) and (pointer:coarse){
+  #rotate{display:flex;position:fixed;inset:0;z-index:50;background:#0B2545;color:#fff;align-items:center;justify-content:center;text-align:center;padding:24px}
+  #rotate b{display:block;font-size:20px;font-weight:900;margin:14px 0 4px} #rotate small{font-size:14px;font-weight:700;color:rgba(255,255,255,.75)}
+}
+/* web / desktop */
+button,.sc.tap{cursor:pointer} .lv.lock{cursor:default}
+.tb,#lom{position:relative} .tb kbd,#lom kbd{display:none}
+@media (hover:hover) and (pointer:fine){
+  canvas#m{cursor:crosshair}
+  .tb:hover,.go:hover,.lv:not(.lock):hover,.scale:hover{filter:brightness(1.05)} .btn:hover{border-color:#fff}
+  .tb kbd,#lom kbd{display:block;position:absolute;top:5px;right:7px;font:800 10px/1 ui-monospace,Menlo,monospace;padding:2px 4px;border-radius:4px;border:1px solid currentColor;opacity:.55}
+}
+@media (min-width:760px){ .top>.row,.top>.bars,.sheet>.hint,.sheet>.btns{width:100%;max-width:720px;margin-left:auto;margin-right:auto} }
+</style>
+</head>
+<body>
+<svg id="map" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg><canvas id="m"></canvas><svg id="ov" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+<div class="top" id="top">
+  <div class="row"><button class="btn" id="menubtn">≡</button><span id="clock">3:00</span><span class="sp"></span><span id="budget"><small>BUDGET</small>100</span><span class="sp"></span><span id="bj" title="Relations"><i></i><i></i><i></i><i></i></span><span class="sp"></span><button class="btn" id="knobbtn">⚙</button></div>
+  <div class="bars"><span>Fish</span><div class="bar" id="fbar"><i></i></div><span>Fleet profit</span><div class="bar" id="pbar"><i style="width:50%"></i></div></div>
+</div>
+<div id="side"></div>
+<div id="evt"></div>
+<div class="sheet" id="line"><div class="hint" id="tx"></div>
+  <div class="btns"><button class="tb" id="b-plane"><span>PLANE</span><small id="bp-s">ready</small><i class="fb"><i id="bp-f"></i></i><kbd>P</kbd></button><button class="tb" id="b-heli"><span>HELICOPTER</span><small id="bh-s">tap a ship</small><i class="fb"><i id="bh-f"></i></i><kbd>H</kbd></button><button id="lom"><span>POST BOUNTY</span><small>needs a listed ship</small><kbd>B</kbd></button></div></div>
+<div class="overlay" id="overlay"><div class="card" id="card"></div></div>
+<div id="rotate" aria-live="polite"><div><svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#FFB400" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="22" y="8" width="20" height="36" rx="4"/><path d="M29 38h6"/><path d="M12 30a20 20 0 0 0 14 22"/><path d="M22 50l4 2-1 4"/></svg><b>Turn your phone upright</b><small>ARMADA plays in portrait.</small></div></div>
+<script>
+const $=s=>document.querySelector(s);
+// Older engines (iOS < 16, Chrome < 99) have no canvas roundRect(); without it Level 8 throws inside the draw loop and the game freezes.
+if(!CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){ const k=Math.max(0,Math.min(r||0,w/2,h/2)); this.moveTo(x+k,y); this.arcTo(x+w,y,x+w,y+h,k); this.arcTo(x+w,y+h,x,y+h,k); this.arcTo(x,y+h,x,y,k); this.arcTo(x,y,x+w,y,k); this.closePath(); };
+const FX=[30.99584672134364, 0.12750376107114766, 2573.748637351634], FY=[5.438533268746682, -30.421853765000673, 441.68105337141753], IW=480, IH=640; const RINGS=[[[404.7,190.2],[378.7,183.5],[313.8,201.0],[305.9,240.7],[286.6,250.7],[279.1,269.2],[310.8,318.3],[303.3,329.8],[329.1,337.4],[335.2,353.3],[364.3,357.5],[386.1,345.2],[382.8,392.4],[415.7,396.4],[443.1,448.4],[430.8,482.2],[437.3,498.2],[422.0,514.7],[427.8,529.1],[420.0,539.9],[437.9,564.4],[413.3,586.3],[417.0,596.3],[406.4,600.3],[403.9,615.3],[388.7,616.9],[354.4,579.0],[243.7,502.0],[218.4,473.8],[204.5,447.9],[209.2,433.8],[166.1,363.0],[131.4,275.6],[93.5,212.6],[58.0,184.8],[66.1,173.1],[52.0,141.4],[55.4,128.6],[83.4,107.9],[88.0,123.7],[78.4,125.9],[78.6,138.8],[104.7,144.2],[123.5,163.1],[144.8,119.0],[196.7,102.5],[231.2,77.2],[240.9,50.3],[229.5,34.0],[242.2,33.8],[290.1,79.1],[312.6,117.7],[373.7,122.9],[400.9,141.4],[380.6,172.0],[404.7,190.2]],[[388.7,616.9],[403.9,615.3],[406.4,600.3],[417.0,596.3],[429.9,615.0],[433.5,643.7],[449.3,660.5],[439.9,688.9],[457.1,718.8],[466.8,766.7],[493.8,776.9],[483.1,806.4],[445.5,821.8],[451.1,833.1],[444.4,873.9],[452.7,890.6],[436.2,893.2],[411.0,927.1],[399.4,952.8],[405.2,979.7],[383.9,1005.8],[397.3,1070.6],[405.4,1074.4],[404.3,1102.8],[382.2,1130.3],[387.0,1155.8],[362.5,1175.3],[372.8,1228.8],[355.7,1237.7],[345.7,1257.6],[338.7,1291.3],[344.4,1330.7],[332.3,1344.7],[333.5,1359.8],[344.3,1366.9],[342.0,1401.2],[362.4,1410.3],[334.5,1411.8],[356.4,1429.6],[344.0,1438.1],[345.4,1470.9],[319.8,1503.9],[326.9,1515.8],[316.9,1531.1],[286.8,1549.8],[299.9,1587.5],[325.0,1590.0],[322.8,1615.8],[336.4,1631.0],[445.1,1660.1],[420.9,1653.4],[372.5,1662.0],[366.5,1691.7],[356.9,1693.0],[322.5,1670.9],[337.1,1669.8],[341.7,1678.2],[359.2,1660.9],[318.2,1673.5],[302.7,1664.1],[312.7,1651.2],[350.5,1653.3],[313.3,1644.6],[300.6,1658.5],[284.5,1648.7],[300.6,1640.9],[273.0,1640.6],[264.1,1623.2],[310.9,1626.2],[313.1,1639.1],[319.3,1636.8],[318.7,1620.3],[299.2,1608.9],[316.8,1622.7],[288.3,1625.0],[267.6,1610.4],[275.6,1610.0],[275.4,1599.3],[248.4,1588.2],[239.8,1575.1],[252.5,1576.7],[253.8,1567.8],[279.5,1590.0],[284.5,1577.1],[274.2,1585.7],[267.4,1577.8],[275.2,1576.1],[254.1,1562.7],[274.9,1560.2],[264.7,1546.6],[279.0,1549.4],[271.0,1542.5],[275.7,1530.8],[262.3,1540.1],[263.3,1515.9],[273.6,1514.0],[259.0,1510.9],[256.0,1496.3],[292.8,1507.4],[282.7,1490.7],[266.8,1497.3],[253.5,1486.8],[270.0,1486.3],[259.1,1479.5],[269.1,1473.7],[264.5,1461.0],[243.1,1455.7],[243.7,1448.8],[226.4,1451.6],[229.7,1459.2],[221.1,1450.6],[245.3,1438.4],[241.0,1429.2],[269.3,1430.8],[275.5,1420.6],[273.6,1440.4],[262.1,1443.2],[282.6,1434.3],[278.8,1456.8],[286.9,1437.8],[282.6,1424.3],[307.4,1427.7],[292.6,1414.5],[315.3,1402.9],[297.1,1386.9],[313.0,1355.3],[312.8,1331.5],[323.9,1337.5],[321.2,1324.5],[311.3,1320.6],[326.8,1310.9],[283.1,1310.5],[275.5,1285.7],[298.9,1236.6],[285.8,1177.0],[299.5,1174.3],[330.8,1116.7],[354.9,1046.7],[347.1,987.5],[359.7,955.9],[353.2,932.8],[380.5,858.5],[388.9,775.9],[382.8,765.1],[398.5,714.3],[388.7,616.9]],[[439.8,1670.1],[438.9,1737.0],[338.2,1711.7],[372.3,1709.5],[387.5,1718.2],[370.5,1702.4],[380.8,1689.6],[380.7,1705.1],[420.3,1724.9],[426.9,1721.5],[392.5,1699.6],[417.1,1689.6],[387.0,1683.1],[383.6,1673.7],[393.3,1670.8],[385.5,1663.7],[399.2,1668.2],[415.6,1661.0],[439.8,1670.1]],[[281.7,1359.3],[262.5,1352.2],[273.5,1310.6],[289.3,1316.5],[292.7,1325.9],[281.1,1336.0],[291.9,1348.6],[281.7,1359.3]],[[258.9,1531.9],[255.4,1557.4],[246.4,1547.3],[251.4,1538.8],[241.8,1549.9],[225.7,1545.5],[245.9,1516.8],[256.8,1519.9],[258.9,1531.9]],[[306.7,1672.1],[329.0,1686.0],[308.2,1692.1],[311.6,1684.5],[297.7,1686.0],[277.9,1669.1],[306.7,1672.1]],[[406.3,1733.4],[444.8,1741.3],[440.1,1746.6],[457.4,1764.3],[422.1,1743.8],[422.4,1753.2],[413.7,1749.9],[397.6,1738.9],[406.3,1733.4]],[[282.8,1391.1],[274.4,1395.7],[282.0,1417.8],[271.2,1417.4],[255.1,1394.2],[274.7,1382.1],[282.8,1391.1]],[[240.1,35.6],[229.5,34.0],[240.9,50.3],[231.2,77.2],[196.7,102.5],[144.8,119.0],[123.5,163.1],[104.7,144.2],[78.6,138.8],[78.4,125.9],[88.0,123.7],[83.4,107.9],[102.1,86.6],[98.8,70.4],[95.9,84.6],[93.5,78.0],[84.7,87.5],[65.0,70.6],[66.0,34.6],[85.3,23.9],[79.2,15.2],[92.6,1.5],[93.3,-18.8],[128.3,-24.2],[129.6,-31.6],[174.7,8.9],[202.6,18.6],[209.8,13.5],[240.1,35.6]],[[-255.2,-55.3],[-240.8,-29.3],[-251.0,-22.9],[-262.5,-29.8],[-250.7,-36.8],[-265.5,-56.5],[-255.2,-55.3]],[[417.0,596.3],[413.3,586.3],[437.9,564.4],[420.0,539.9],[427.8,529.1],[422.0,514.7],[437.3,498.2],[430.8,482.2],[443.1,448.4],[415.7,396.4],[445.4,406.5],[509.1,380.8],[545.4,381.4],[545.5,428.3],[557.8,452.7],[575.4,469.8],[617.2,484.1],[656.8,517.2],[696.4,532.1],[703.7,573.0],[694.1,571.6],[704.6,585.0],[706.3,609.4],[763.4,619.7],[761.7,648.3],[779.0,659.9],[789.5,683.3],[770.6,738.8],[767.9,728.2],[739.7,707.2],[656.9,703.6],[640.7,728.4],[629.0,777.2],[623.5,769.3],[591.5,764.0],[577.2,786.4],[568.6,766.6],[518.4,744.7],[487.9,770.4],[472.1,769.8],[439.9,688.9],[449.0,659.8],[433.5,643.7],[429.9,615.0],[417.0,596.3]],[[500.9,40.8],[517.3,57.4],[538.1,54.7],[544.5,64.6],[608.0,31.0],[609.2,23.6],[588.8,17.3],[583.7,-16.8],[566.1,-40.9],[625.8,-9.4],[638.0,-24.0],[683.6,-28.2],[694.5,-47.0],[715.0,-39.1],[709.9,-23.3],[723.9,-16.2],[728.4,-1.7],[714.7,33.6],[724.4,63.9],[749.5,85.1],[803.5,69.9],[839.5,80.8],[839.5,60.7],[869.9,63.6],[896.2,82.8],[907.4,77.8],[932.2,87.3],[979.3,30.7],[1001.9,101.0],[1025.4,119.5],[1027.2,135.0],[984.3,165.2],[962.4,200.7],[941.3,202.4],[963.3,207.5],[995.9,193.5],[1011.3,228.7],[1044.8,226.1],[1034.8,252.6],[1048.2,232.5],[1074.9,223.8],[1071.9,213.2],[1082.1,202.5],[1108.5,204.4],[1164.5,235.8],[1168.5,247.5],[1176.3,241.2],[1189.6,252.1],[1186.1,267.0],[1197.9,272.4],[1187.2,295.8],[1202.5,276.3],[1203.7,286.8],[1228.8,278.2],[1287.7,304.9],[1334.5,311.3],[1380.6,345.6],[1420.7,388.8],[1471.2,404.4],[1480.7,419.5],[1493.9,474.1],[1488.8,507.3],[1469.1,538.3],[1414.3,580.7],[1386.8,624.3],[1378.8,626.6],[1372.9,615.2],[1367.9,619.5],[1360.4,642.5],[1366.6,712.7],[1357.7,767.2],[1342.4,781.2],[1338.2,820.7],[1301.5,865.1],[1300.1,888.0],[1278.4,893.6],[1267.8,911.2],[1239.2,906.8],[1233.1,898.4],[1231.2,906.0],[1187.2,900.4],[1189.3,907.2],[1161.6,918.5],[1117.9,924.2],[1076.5,952.9],[1060.1,948.5],[1070.3,957.3],[1059.4,975.7],[1065.1,1005.1],[1057.5,1045.7],[1028.0,1064.3],[991.5,1115.7],[956.6,1135.8],[956.0,1126.9],[980.6,1120.5],[1002.1,1092.6],[979.8,1076.6],[980.4,1098.3],[958.9,1113.7],[937.6,1163.5],[915.2,1177.9],[910.3,1159.6],[923.1,1148.8],[903.3,1124.6],[846.4,1077.8],[834.0,1082.6],[808.4,1048.6],[784.2,1046.8],[842.8,996.5],[901.5,973.9],[906.8,949.6],[900.1,929.5],[877.8,922.9],[889.5,878.3],[877.4,868.9],[852.9,868.9],[841.3,818.1],[821.2,806.4],[806.0,809.5],[774.4,799.1],[778.6,766.0],[768.5,738.7],[777.8,734.8],[769.4,726.1],[789.5,683.3],[779.0,659.9],[761.7,648.3],[763.4,619.7],[706.3,609.4],[704.6,585.0],[694.1,571.6],[703.7,573.0],[696.4,532.1],[656.8,517.2],[617.2,484.1],[575.4,469.8],[557.8,452.7],[545.5,428.3],[545.4,381.4],[509.1,380.8],[445.4,406.5],[382.8,392.4],[386.1,345.2],[364.3,357.5],[335.2,353.3],[329.1,337.4],[303.3,329.8],[310.8,318.3],[279.1,269.2],[286.6,250.7],[305.9,240.7],[313.8,201.0],[378.7,183.5],[404.4,192.0],[422.5,100.8],[401.9,64.9],[402.6,43.1],[430.5,46.1],[425.6,32.8],[408.8,29.6],[408.9,9.8],[460.7,18.6],[460.4,10.3],[468.4,19.0],[484.9,10.6],[494.7,41.0],[500.9,40.8]],[[1035.4,178.8],[1073.8,187.6],[1060.0,218.4],[1007.9,221.4],[999.4,193.1],[1003.8,174.4],[1035.4,178.8]],[[364.6,-307.0],[344.8,-304.7],[322.0,-283.4],[300.8,-236.9],[318.4,-231.4],[331.9,-199.8],[328.4,-181.2],[342.6,-163.8],[400.9,-151.2],[422.5,-122.1],[482.9,-113.3],[470.9,-64.6],[487.9,-28.4],[470.7,-12.3],[490.8,3.4],[500.9,36.6],[494.7,41.0],[484.9,10.6],[468.4,19.0],[460.4,10.3],[460.7,18.6],[408.9,9.8],[408.8,29.6],[425.6,32.8],[430.5,46.1],[402.6,43.1],[401.9,64.9],[422.5,100.8],[404.7,190.2],[380.6,172.0],[400.9,141.4],[373.7,122.9],[312.6,117.7],[290.1,79.1],[272.2,67.4],[255.2,41.0],[209.8,13.5],[202.6,18.6],[174.7,8.9],[124.4,-37.4],[138.3,-39.5],[138.1,-57.5],[162.3,-64.2],[185.1,-96.5],[171.5,-108.0],[178.7,-122.3],[171.0,-148.6],[180.1,-154.3],[176.4,-179.0],[160.1,-201.9],[164.5,-215.5],[171.3,-210.3],[181.9,-220.6],[176.1,-242.1],[194.6,-217.2],[190.6,-237.4],[230.4,-257.2],[228.3,-278.5],[255.4,-303.3],[271.2,-297.2],[269.0,-290.6],[277.2,-305.9],[302.9,-300.8],[352.6,-326.2],[366.6,-321.0],[364.6,-307.0]]];
+const DECOR=[[[784.2,1046.8],[766.0,1096.3],[755.5,1166.9],[797.2,1206.5],[790.6,1221.8],[811.0,1240.3],[810.6,1257.5],[785.1,1287.5],[765.5,1294.7],[674.6,1295.5],[636.5,1283.0],[645.4,1301.9],[634.7,1346.3],[596.5,1347.8],[551.6,1329.3],[554.0,1369.0],[571.6,1382.1],[591.2,1375.8],[596.3,1394.7],[583.3,1397.9],[569.4,1384.2],[554.5,1386.4],[574.6,1399.1],[545.7,1412.3],[533.4,1454.0],[493.1,1454.5],[472.6,1475.0],[475.3,1487.3],[497.9,1508.6],[526.7,1518.2],[529.1,1531.2],[515.1,1536.6],[527.8,1542.2],[476.2,1563.9],[462.4,1592.8],[451.6,1594.6],[438.9,1581.7],[429.3,1587.6],[446.6,1595.5],[430.5,1599.4],[417.4,1616.9],[426.6,1634.3],[414.2,1633.1],[429.7,1638.8],[447.0,1661.1],[336.4,1631.0],[322.8,1615.8],[325.0,1590.0],[299.9,1587.5],[286.8,1549.8],[316.9,1531.1],[326.9,1515.8],[319.8,1503.9],[345.4,1470.9],[344.0,1438.1],[356.4,1429.6],[334.5,1411.8],[362.4,1410.3],[342.0,1401.2],[344.3,1366.9],[331.9,1357.1],[333.3,1334.8],[344.4,1330.7],[339.0,1288.4],[355.7,1237.7],[372.5,1230.6],[362.5,1175.3],[387.0,1155.8],[382.2,1130.3],[404.3,1102.8],[405.4,1074.4],[397.3,1070.6],[382.7,1010.8],[405.2,979.7],[399.4,952.8],[411.0,927.1],[436.2,893.2],[452.7,890.6],[444.4,873.9],[447.1,818.4],[483.1,806.4],[493.8,776.9],[487.9,770.4],[518.4,744.7],[568.6,766.6],[577.2,786.4],[589.7,764.2],[623.2,769.2],[679.0,832.3],[783.6,898.7],[753.9,953.8],[843.2,972.5],[873.3,951.0],[877.8,922.9],[900.1,929.5],[906.8,949.6],[901.5,973.9],[842.8,996.5],[784.2,1046.8]],[[438.9,1737.0],[439.8,1670.1],[451.8,1685.3],[444.1,1689.5],[481.1,1720.0],[546.5,1750.7],[505.2,1754.1],[438.9,1737.0]],[[768.5,738.7],[778.6,766.0],[774.4,799.1],[839.8,816.7],[852.9,868.9],[877.4,868.9],[889.5,878.3],[873.3,951.0],[843.2,972.5],[753.9,953.8],[783.6,898.7],[679.0,832.3],[629.0,777.2],[640.7,728.4],[656.9,703.6],[739.7,707.2],[767.9,728.2],[768.5,738.7]],[[915.2,1177.9],[902.1,1195.0],[867.6,1205.7],[825.8,1197.5],[797.3,1178.8],[775.6,1175.0],[758.1,1149.7],[783.0,1047.8],[808.4,1048.6],[834.0,1082.6],[846.4,1077.8],[903.3,1124.6],[923.1,1148.8],[910.3,1159.6],[915.2,1177.9]],[[714.5,-144.8],[719.7,-134.8],[692.6,-117.9],[704.0,-99.5],[679.5,-94.4],[671.7,-72.9],[695.1,-36.8],[666.2,-23.6],[630.5,-21.7],[625.8,-9.4],[566.1,-40.9],[583.7,-16.8],[588.8,17.3],[609.2,29.4],[542.1,64.2],[539.3,55.2],[518.8,58.3],[500.9,40.8],[490.8,3.4],[470.7,-12.3],[487.9,-28.4],[470.9,-64.6],[482.9,-113.3],[422.5,-122.1],[400.9,-151.2],[342.6,-163.8],[328.4,-181.2],[331.9,-199.8],[318.4,-231.4],[300.8,-236.9],[322.0,-283.4],[344.8,-304.7],[364.6,-307.0],[344.8,-301.7],[355.8,-272.0],[339.9,-249.2],[352.8,-224.1],[366.8,-224.4],[372.7,-240.1],[357.4,-275.4],[411.4,-286.9],[396.6,-302.3],[405.6,-309.6],[417.0,-286.2],[455.1,-269.8],[463.0,-248.0],[521.6,-242.0],[556.3,-218.9],[599.7,-224.3],[582.1,-231.7],[657.1,-221.6],[625.1,-220.8],[643.3,-194.8],[650.8,-199.6],[661.3,-187.1],[666.0,-194.2],[690.7,-173.7],[676.3,-153.1],[664.9,-155.1],[714.5,-144.8]],[[691.7,-46.8],[671.7,-72.9],[679.5,-94.4],[704.0,-99.5],[692.6,-117.9],[719.7,-134.8],[714.5,-144.8],[761.1,-101.6],[756.0,-71.8],[767.6,-84.7],[800.6,-57.6],[801.1,-27.3],[780.3,-21.6],[774.7,1.2],[787.3,25.0],[798.1,27.2],[823.4,75.5],[797.3,70.3],[751.7,85.1],[738.0,77.6],[722.3,59.9],[714.7,33.6],[728.4,-1.7],[723.9,-16.2],[709.9,-23.3],[710.3,-44.8],[691.7,-46.8]],[[895.7,-15.9],[886.6,9.3],[900.7,38.8],[887.9,71.0],[839.5,60.7],[839.5,80.8],[816.2,71.2],[798.1,27.2],[787.3,25.0],[775.6,4.4],[780.3,-21.6],[798.0,-23.6],[808.7,-50.4],[841.8,-35.7],[844.0,-43.3],[889.6,-33.8],[899.2,-29.0],[895.7,-15.9]],[[684.0,-198.3],[656.4,-201.3],[668.8,-205.2],[664.2,-219.7],[686.9,-219.4],[684.0,-198.3]],[[698.4,1679.3],[730.1,1683.9],[695.3,1699.7],[677.6,1693.9],[700.0,1689.0],[689.4,1685.3],[700.0,1685.0],[689.8,1674.7],[698.4,1679.3]],[[899.2,-29.0],[895.7,-15.9],[886.6,9.3],[900.7,38.8],[887.9,71.0],[896.2,82.8],[907.4,77.8],[932.2,87.3],[979.3,30.7],[968.1,20.8],[935.4,-10.5],[912.5,-21.8],[901.9,-27.0]]]; // drawn-only land (countries missing from RINGS: Argentina, Paraguay, Uruguay, Venezuela, Guyana, Suriname, French Guiana, Trinidad, Falklands) for wide screens; not used by onLand() or any game logic
+const img={complete:false};
+// ---------- save ----------
+const SAVE_KEY='armada.levels'; let save={stars:{},unlocked:1};
+try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(s&&typeof s==='object'){ save=Object.assign(save,s); save.stars=save.stars||{}; } }catch(e){}
+const persist=()=>{ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(save)); }catch(e){} };
+// ---------- geometry (map units = basemap pixels at 1x) ----------
+const toImg=(lon,lat)=>[FX[0]*lon+FX[1]*lat+FX[2], FY[0]*lon+FY[1]*lat+FY[2]];
+const COAST_LL=[[-70.3,-18.4],[-71.3,-17.6],[-72.5,-16.6],[-74,-15.5],[-75.3,-15.2],[-76.3,-13.8],[-76.9,-12.6],[-77.15,-12.05],[-77.6,-11.2],[-78.1,-10.3],[-78.6,-9.4],[-79.1,-8.2],[-79.5,-7.5],[-80.1,-6.6],[-80.9,-5.9],[-81.2,-5.2],[-81.1,-4.2],[-80.4,-3.5]];
+const COAST=COAST_LL.map(p=>toImg(p[0],p[1]));
+const NMI200=3.33*Math.abs(FY[1]); // 200 nmi in map px (lat degrees × px/deg)
+function coastDist(u,v){ // distance to coast polyline and whether seaward (west)
+  let best=1e9, side=1;
+  for(let i=0;i<COAST.length-1;i++){ const [ax,ay]=COAST[i],[bx,by]=COAST[i+1]; const dx=bx-ax,dy=by-ay; const t=Math.max(0,Math.min(1,((u-ax)*dx+(v-ay)*dy)/(dx*dx+dy*dy))); const px=ax+t*dx,py=ay+t*dy; const d=Math.hypot(u-px,v-py); if(d<best){ best=d; side=((bx-ax)*(v-ay)-(by-ay)*(u-ax)); } }
+  // polyline runs south→north (v decreasing): sea is to the west; cross>0 ⇒ point is on the right of travel direction… decide empirically via x: seaward if u < coast x at nearest point
+  return best;
+}
+function onLand(u,v){ let inside=false; for(const r of RINGS){ for(let i=0,j=r.length-1;i<r.length;j=i++){ const [xi,yi]=r[i],[xj,yj]=r[j]; if(((yi>v)!==(yj>v)) && (u < (xj-xi)*(v-yi)/(yj-yi)+xi)) inside=!inside; } } return inside; }
+function coastXat(v){ // x of coast at a given v (interpolate along polyline)
+  for(let i=0;i<COAST.length-1;i++){ const a=COAST[i],b=COAST[i+1]; const lo=Math.min(a[1],b[1]),hi=Math.max(a[1],b[1]); if(v>=lo&&v<=hi){ const t=(v-a[1])/((b[1]-a[1])||1e-9); return a[0]+t*(b[0]-a[0]); } }
+  return v<COAST[COAST.length-1][1]?COAST[COAST.length-1][0]:COAST[0][0];
+}
+const seaward=(u,v)=>u<coastXat(v) && !onLand(u,v);
+const inEEZ=(u,v)=>seaward(u,v)&&coastDist(u,v)<=NMI200;
+const highSeas=(u,v)=>seaward(u,v)&&coastDist(u,v)>NMI200;
+// ---------- canvas / view ----------
+const cv=$('#m'), ctx=cv.getContext('2d'); let W=0,H=0,K=1,OX=0,OY=0,topPad=0,botPad=0;
+const P=(u,v)=>[OX+u*K, OY+v*K]; const S2M=(sx,sy)=>[(sx-OX)/K,(sy-OY)/K];
+function layout(){ topPad=$('#top').offsetHeight; botPad=$('#line').offsetHeight; const avail=Math.max(200,H-topPad-botPad);
+  // Fit the map by height on every screen. On a portrait phone this is what max(height-fit, width-fit) already picked;
+  // on wide screens (desktop, tablets) width-fit zoomed far in, hid ports under the HUD and shrank the playfield
+  // (spawns and waves use the visible rows), so the game played differently. Height-fit keeps the phone's playfield
+  // and just shows more open sea and land at the sides.
+  // Playfield = a phone-shaped column (width ≤ 0.8 × height, the widest a phone gets), centred under the centred HUD.
+  // The level's anchor (ax) is placed within that column, and the swarm's western wall (spawn clamp, roaming limit) is the
+  // column's left edge, so a wide window neither gives the fleet more sea nor pushes the action to one side.
+  // On a phone the column is the whole screen (PLAY_X0=0), as before.
+  const V=(typeof LV!=='undefined'&&LV[idx]&&LV[idx].view)||{zoom:1.45,lon:-77.1,lat:-12.05,ax:0.64,ay:0.40}; K=(avail/IH)*V.zoom; const [lx,ly]=toImg(V.lon,V.lat);
+  const playW=Math.min(W,avail*0.8); PLAY_X0=(W-playW)/2; OX=PLAY_X0+playW*V.ax-lx*K; OY=topPad+avail*V.ay-ly*K;
+  // Very narrow phones (e.g. Galaxy Fold cover): keep the privateer dock (Pisco, -75.16/-15.36) at least 22 px inside the right edge.
+  if(V.zoom>=1){ const [du]=toImg(-75.16,-15.36); OX=Math.min(OX,W-22-du*K); }
+  // Level 8 (zoomed-out real-scale view), any screen: frame Peru's 200-mile zone plus sea to the west for the swarm (18%) and a
+  // strip of land to the east (35%, room for the PERU label), centred, keeping 56 px at the bottom free for the fleet-count box.
+  if(V.zoom<1&&typeof EEZ!=='undefined'){ let v0=1e9,v1=-1e9,u0=1e9,u1=-1e9; for(const [u,v] of EEZ.concat(COAST)){ v0=Math.min(v0,v); v1=Math.max(v1,v); u0=Math.min(u0,u); u1=Math.max(u1,u); }
+    const uw=u1-u0, bl=u0-uw*0.18, bw=uw*1.53, bh=(v1-v0)*1.06, ah=avail-56; K=Math.min(W/bw, ah/bh); OX=W/2-(bl+bw/2)*K; OY=topPad+ah/2-(v0+v1)/2*K; }
+  // The helipad sits 52 px beside the airfield. Its position is stored in map units, so re-place it for the new scale
+  // (otherwise it ends up ~30 px away after turning a tablet or resizing a window). Idle helicopters move with it.
+  try{ if(S&&S.heli&&S.air){ S.heli.hu=S.air.hu+52/K; S.heli.hv=S.air.hv; if(S.heli.state==='port'||S.heli.state==='refuel'){ S.heli.u=S.heli.hu; S.heli.v=S.heli.hv; } } }catch(_){}
+  redrawMap(); }
+let PLAY_X0=0; const playU0=()=>S2M(PLAY_X0,0)[0];
+addEventListener('orientationchange',()=>setTimeout(()=>resize(),200)); if(window.visualViewport) visualViewport.addEventListener('resize',()=>resize());
+let DPR=3;
+function resize(){ const vv=window.visualViewport; W=Math.round(document.documentElement.clientWidth||innerWidth); H=Math.round(document.documentElement.clientHeight||innerHeight);
+  // Backing-store scale: at least 2× (supersampled, crisp dots on 1× screens), at most 3×, and capped by a pixel budget so a
+  // big desktop window isn't redrawing a 5760×3240 canvas every frame. A 390×760 phone stays at 3× as before.
+  const zoom=vv&&vv.scale>1?vv.scale:1; DPR=Math.min(3,Math.max(2,(devicePixelRatio||1)*zoom)); const PX_BUDGET=6e6; if(W*H*DPR*DPR>PX_BUDGET) DPR=Math.max(1,Math.sqrt(PX_BUDGET/(W*H)));
+  document.documentElement.classList.toggle('compact',H<700); // short screens: slimmer HUD so the map gets the height (see template CSS)
+  const pw=Math.round(W*DPR), ph=Math.round(H*DPR); if(cv.width!==pw) cv.width=pw; if(cv.height!==ph) cv.height=ph; cv.style.width=W+'px'; cv.style.height=H+'px';
+  ctx.setTransform(pw/W,0,0,ph/H,0,0); ctx.imageSmoothingQuality='high'; layout(); watchDPR(); }
+let _mq=null; function watchDPR(){ try{ if(_mq) _mq.removeEventListener('change',resize); _mq=matchMedia(`(resolution: ${devicePixelRatio||1}dppx)`); _mq.addEventListener('change',resize); }catch(e){} }
+function diag(){ const vv=window.visualViewport; return `css ${W}×${H} · screen ${screen.width}×${screen.height} · dpr ${devicePixelRatio} · zoom ${vv?vv.scale.toFixed(2):'–'} · canvas ${cv.width}×${cv.height} (×${DPR.toFixed(2)}) · ${navigator.userAgent.match(/(iPhone|Android|iPad|Mac|Windows)[^;)]*/)?.[0]||''}`; }
+addEventListener('resize',resize);
+// ---------- utils ----------
+const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>v<a?a:v>b?b:v, fmt=n=>Math.round(n).toLocaleString('en-US');
+const fmtT=kt=>kt>=1000?(kt/1000).toFixed(1)+'M t':fmt(kt*1000)+' t'; const fmtM=m=>m>=1000?'$'+(m/1000).toFixed(1)+'B':'$'+fmt(m)+'M';
+let lastBuzz=0; const buzz=ms=>{ const n=performance.now(); if(n-lastBuzz<60) return; lastBuzz=n; try{ navigator.vibrate&&navigator.vibrate(ms);}catch(e){} };
+// ---------- audio ----------
+let AC=null;
+function audio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume().catch(()=>{}); }
+function tone(f,dur,type,vol,slide){ if(!AC) return; try{ const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime; o.type=type||'square'; o.frequency.setValueAtTime(f,t); if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+dur); g.gain.setValueAtTime(vol||0.08,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t+dur+0.02);}catch(e){} }
+const SFX={ seize(){ tone(170,0.12,'square',0.08,-90); tone(700,0.05,'triangle',0.04); }, big(){ tone(120,0.3,'square',0.1,-60); setTimeout(()=>tone(90,0.4,'sawtooth',0.07),120); }, shutter(){ tone(1800,0.03,'square',0.05); setTimeout(()=>tone(1200,0.03,'square',0.04),40); }, stamp(){ tone(120,0.08,'square',0.1,-60); tone(1200,0.03,'sine',0.03); }, tap(){ tone(880,0.035,'sine',0.03); }, no(){ tone(200,0.18,'sawtooth',0.06,-80); }, deploy(){ tone(300,0.15,'triangle',0.06,200); }, plane(){ tone(420,0.5,'sawtooth',0.03,80); }, horn(){ tone(110,0.9,'sawtooth',0.07,-20); setTimeout(()=>tone(82,1.1,'sawtooth',0.07,-10),300); }, win(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'triangle',0.08),i*90)); }, lose(){ [400,330,260,180].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'sawtooth',0.05),i*120)); } };
+// ---------- fx ----------
+const parts=[], floats=[], planesFx=[]; let shake=0, tGlobal=0, evtT=0;
+function burst(u,v,color,n,sp){ n=n||8; sp=sp||60; for(let i=0;i<n;i++){ if(parts.length>400) return; const a=Math.random()*6.283, s=sp*(0.4+Math.random())/K; parts.push({u,v,du:Math.cos(a)*s,dv:Math.sin(a)*s,life:0.45+Math.random()*0.3,t:0,color,r:2+Math.random()*2.5}); } }
+function floatText(u,v,text,color,size){ if(floats.length>30) floats.shift(); floats.push({u,v,text,color:color||'#fff',t:0,size:size||13,life:1.8+Math.min(1.6,String(text).length*0.035)}); }
+function kick(n){ shake=Math.max(shake,n); }
+function event(title,sub){ line(title+(sub?' · '+sub:''),'hot'); tone(260,0.18,'triangle',0.07,60); kick(2); }
+function info(text,bad,ms){ line(text,bad?'bad':'ok'); }
+function updateFx(dt){ for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.t+=dt; if(p.t>p.life){parts.splice(i,1);continue;} p.u+=p.du*dt; p.v+=p.dv*dt; p.du*=0.96; p.dv*=0.96; } for(let i=floats.length-1;i>=0;i--){ const f=floats[i]; f.t+=dt; if(f.t>(f.life||2.2)) floats.splice(i,1); } for(let i=planesFx.length-1;i>=0;i--){ const p=planesFx[i]; p.t+=dt; if(p.t>p.dur) planesFx.splice(i,1); }  shake*=Math.pow(0.0005,dt); if(shake<0.2) shake=0; }
+const LS=1.3, ICON=1.4;
+function solid(c){ if(!c) return c; const m=c.match(/^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/); if(!m) return c; const a=+m[4]; if(a===0) return c; if(a>=0.6) return `rgb(${m[1]},${m[2]},${m[3]})`; return c; }
+const OV=[]; let _ovLast='';
+function ovM(){ const m=ctx.getTransform(), sx=cv.width/W, sy=cv.height/H; return `matrix(${(m.a/sx).toFixed(4)} ${(m.b/sy).toFixed(4)} ${(m.c/sx).toFixed(4)} ${(m.d/sy).toFixed(4)} ${(m.e/sx).toFixed(2)} ${(m.f/sy).toFixed(2)})`; }
+function ovPt(x,y){ const m=ctx.getTransform(), sx=cv.width/W, sy=cv.height/H; return [(m.a*x+m.c*y+m.e)/sx,(m.b*x+m.d*y+m.f)/sy]; }
+function ovA(){ const a=ctx.globalAlpha; return a<0.999?` opacity="${a.toFixed(2)}"`:''; }
+function flushOV(){ const s=OV.join(''); OV.length=0; if(s===_ovLast) return; _ovLast=s; const el=document.getElementById('ov'); if(el){ el.setAttribute('viewBox',`0 0 ${W} ${H}`); el.innerHTML=s; } }
+function text(t,sx,sy,size,color,align,halo){ size=Math.round(Math.max(13,size*LS)); let [x,y]=ovPt(sx,sy); const anc=align==='left'?'start':align==='right'?'end':'middle'; { const w=String(t).length*size*0.56, l=anc==='start'?x:anc==='end'?x-w:x-w/2; if(l<4) x+=4-l; else if(l+w>W-4) x-=l+w-(W-4); }
+  const h=halo===undefined?'#0B2545':halo; let st=''; if(h&&!/,\s*0\)$/.test(h)){ st=` stroke="${/255,255,255/.test(h)?'#fff':'#0B2545'}" stroke-width="${Math.max(3,Math.round(size*0.24))}" stroke-linejoin="round" paint-order="stroke"`; }
+  OV.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" font-weight="${halo===null?700:800}" fill="${solid(color)||'#0B2545'}" text-anchor="${anc}" dominant-baseline="central"${st}${ovA()}>${esc(t)}</text>`); }
+function drawFx(){ for(const p of parts){ const [x,y]=P(p.u,p.v); ctx.globalAlpha=1-(p.t/p.life); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(x,y,p.r,0,7); ctx.fill(); } ctx.globalAlpha=1;
+  for(const p of planesFx){ const k=p.t/p.dur; const [x0,y0]=P(p.u0,p.v0),[x1,y1]=P(p.u1,p.v1); const x=x0+(x1-x0)*k,y=y0+(y1-y0)*k-Math.sin(k*Math.PI)*60; ctx.save(); ctx.globalAlpha=1-k*0.5; ctx.translate(x,y); ctx.rotate(Math.atan2(y1-y0,x1-x0)); ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(-7,-5); ctx.lineTo(-3,0); ctx.lineTo(-7,5); ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='#0B2545'; ctx.stroke(); ctx.restore(); }
+  for(const f of floats){ const [x,y]=P(f.u,f.v); const L=f.life||2.2, a=f.t<L-0.5?1:(L-f.t)/0.5; ctx.globalAlpha=clamp(a,0,1); text(f.text,x,y-Math.min(f.t,1.2)*24,f.size,f.color,'center','rgba(11,37,69,.9)'); } ctx.globalAlpha=1; }
+function boat(sx,sy,a,len,col){ ctx.save(); ctx.translate(sx,sy); ctx.rotate(a); ctx.scale(1.2,1.2); ctx.beginPath(); ctx.moveTo(len*0.55,0); ctx.lineTo(len*0.15,-len*0.4); ctx.lineTo(-len*0.45,-len*0.35); ctx.lineTo(-len*0.45,len*0.35); ctx.lineTo(len*0.15,len*0.4); ctx.closePath(); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=1.3; ctx.strokeStyle='#0B2545'; ctx.stroke(); ctx.restore(); }
+function reeferShape(sx,sy,a,len,col){ ctx.save(); ctx.translate(sx,sy); ctx.rotate(a); const L=len*2.1,Wd=len*0.72; ctx.beginPath(); ctx.moveTo(L*0.5,0); ctx.lineTo(L*0.3,-Wd); ctx.lineTo(-L*0.5,-Wd); ctx.lineTo(-L*0.5,Wd); ctx.lineTo(L*0.3,Wd); ctx.closePath(); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#0B2545'; ctx.stroke(); ctx.fillStyle='#fff'; for(let i=0;i<3;i++) ctx.fillRect(-L*0.42+i*L*0.26,-Wd*0.55,L*0.18,Wd*1.1); ctx.restore(); }
+function drawWorld(){ ctx.clearRect(-50,-50,W+100,H+100); }
+const SVGNS='http://www.w3.org/2000/svg';
+function pathOf(pts,close){ let d=''; pts.forEach((p,i)=>{ const [x,y]=P(p[0],p[1]); d+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1); }); return d+(close?'Z':''); }
+function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function svgText(t,x,y,size,fill,anchor,extra){ return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" fill="${fill}" text-anchor="${anchor||'middle'}" dominant-baseline="central" ${extra||''}>${esc(t)}</text>`; }
+function redrawMap(){ const svg=document.getElementById('map'); if(!svg||!W) return; svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let band=''; EEZ.forEach((p,i)=>{ const [x,y]=P(p[0],p[1]); band+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1); }); for(let i=COAST.length-1;i>=0;i--){ const [x,y]=P(COAST[i][0],COAST[i][1]); band+='L'+x.toFixed(1)+' '+y.toFixed(1); } band+='Z';
+  // Land: Peru (RINGS[0]) in full colour with a crisp border; neighbours muted with faint borders. The light coast halo is
+  // stroked under the fills, so on shared borders the neighbouring fills cover it and only the real coastline keeps a halo.
+  const peru=pathOf(RINGS[0],true); let other=''; for(let i=1;i<RINGS.length;i++) other+=pathOf(RINGS[i],true); for(const r of DECOR) other+=pathOf(r,true);
+  // Chart grid: straight squares of 200 nautical miles in map units (true lat/long lines come out tilted in this projection).
+  let grid=''; { const [u0,v0]=S2M(0,0),[u1,v1]=S2M(W,H), g=NMI200; for(let u=Math.ceil(u0/g)*g;u<=u1;u+=g){ const x=P(u,0)[0].toFixed(1); grid+=`M${x} 0V${H}`; } for(let v=Math.ceil(v0/g)*g;v<=v1;v+=g){ const y=P(0,v)[1].toFixed(1); grid+=`M0 ${y}H${W}`; } }
+  let h=`<defs><linearGradient id="sea" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0F2C4F"/><stop offset="1" stop-color="#163C66"/></linearGradient></defs>
+  <rect width="${W}" height="${H}" fill="url(#sea)"/>
+  <path d="${grid}" fill="none" stroke="#9fc9ff" stroke-opacity=".07" stroke-width="1"/>
+  <path d="${band}" fill="#225585"/>
+  <path d="${peru}${other}" fill="none" stroke="#CFE3EF" stroke-width="6" stroke-linejoin="round"/>
+  <path d="${other}" fill="#7F9C6B" stroke="#7F9C6B" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="${other}" fill="none" stroke="#0B2545" stroke-opacity=".28" stroke-width="1" stroke-linejoin="round"/>
+  <path d="${peru}" fill="#8FAE76" stroke="#0B2545" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="${pathOf(EEZ)}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="12 8" stroke-linecap="round"/>`;
+  { const ty=Math.round(topPad+(H-topPad-botPad)*0.6); let lx=null; for(let i=1;i<EEZ.length;i++){ const [x0,y0]=P(EEZ[i-1][0],EEZ[i-1][1]), [x1,y1]=P(EEZ[i][0],EEZ[i][1]); if((y0-ty)*(y1-ty)<=0&&y0!==y1){ lx=x0+(x1-x0)*(ty-y0)/(y1-y0); break; } }
+    if(lx!=null){ const x0=lx-120>4?lx-120:lx+8; h+=`<rect x="${x0.toFixed(1)}" y="${ty-11}" width="112" height="22" rx="11" fill="#0B2545"/>`+svgText('200-mile line',x0+56,ty,13,'#fff','middle','font-weight="700"'); } }
+  { const [u,v]=toImg(-74.6,-9.6); const [x,y]=P(u,v); if(x<W-30) h+=svgText('PERU',x,y,20,'#0B2545','middle','font-weight="800" letter-spacing="4" opacity=".35"'); }
+  if(typeof mapExtras==='function') h+=mapExtras();
+  // Wide screens: fade the scenery outside the phone-shaped playfield so the eye stays on the play area.
+  // One rect per side with a screen-space gradient (clear at the playfield edge, full shade f px out, padded beyond), so there is no seam.
+  if(PLAY_X0>40){ const f=Math.min(PLAY_X0,360), xl=PLAY_X0, xr=W-PLAY_X0, g=(id,a,b)=>`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${a.toFixed(1)}" y1="0" x2="${b.toFixed(1)}" y2="0"><stop offset="0" stop-color="#0F2C4F" stop-opacity="0"/><stop offset=".4" stop-color="#0F2C4F" stop-opacity=".08"/><stop offset=".75" stop-color="#0F2C4F" stop-opacity=".22"/><stop offset="1" stop-color="#0F2C4F" stop-opacity=".3"/></linearGradient>`;
+    h+=`<defs>${g('fadeL',xl,xl-f)}${g('fadeR',xr,xr+f)}</defs><rect x="0" y="0" width="${xl.toFixed(1)}" height="${H}" fill="url(#fadeL)"/><rect x="${xr.toFixed(1)}" y="0" width="${(W-xr).toFixed(1)}" height="${H}" fill="url(#fadeR)"/>`; }
+  svg.innerHTML=h; }
+// EEZ polyline: offset each coast vertex seaward using local normal
+const EEZ=(()=>{ const out=[]; for(let i=0;i<COAST.length;i++){ const a=COAST[Math.max(0,i-1)], b=COAST[Math.min(COAST.length-1,i+1)]; let nx=(b[1]-a[1]), ny=-(b[0]-a[0]); const L=Math.hypot(nx,ny)||1; nx/=L; ny/=L; let u=COAST[i][0]+nx*NMI200, v=COAST[i][1]+ny*NMI200; if(u>COAST[i][0]){ u=COAST[i][0]-nx*NMI200; v=COAST[i][1]-ny*NMI200; } out.push([u,v]); } return out; })();
+const PORTS=[{name:'Manta',lon:-80.72,lat:-0.95,open:true,far:true},{name:'Guayaquil',lon:-79.9,lat:-2.2,open:true,far:true},{name:'Arica',lon:-70.32,lat:-18.48,open:true,far:true},{name:'Iquique',lon:-70.15,lat:-20.21,open:true,far:true},{name:'Paita',lon:-81.11,lat:-5.09,open:true,far:true},{name:'Chimbote',lon:-78.59,lat:-9.08,open:true},{name:'Callao',lon:-77.15,lat:-12.06,open:true},{name:'Pisco',lon:-76.21,lat:-13.71,open:true},{name:'Matarani',lon:-72.11,lat:-17.0,open:true,far:true}];
+const PLACES=[['ECUADOR',-78.6,-1.6,13],['COLOMBIA',-74.5,2.5,13],['BRAZIL',-68.5,-7.5,13],['BOLIVIA',-66.0,-16.5,13],['CHILE',-69.6,-20.4,13],['Trujillo',-79.0,-8.1,10.5],['Arequipa',-71.5,-16.4,10.5],['Iquitos',-73.25,-3.75,10.5],['Cusco',-71.97,-13.53,10.5]];
+
+// ===================== ARMADA · Stage 1 feel test: the swarm =====================
+var idx=0; const LV=[{view:{zoom:1.32,lon:-78.0,lat:-11.9,ax:0.64,ay:0.45}},{view:{zoom:0.6,lon:-79.5,lat:-11.2,ax:0.66,ay:0.47}}];
+let S=null;
+const TOOLS_ALL={reefers:1,plane:1,heli:1,calls:1,dodges:1,list:1,bounty:1,relations:1,events:1};
+const LEVELS=[
+ {n:1,title:'The Line',drain:3,fact:'Peru’s exclusive economic zone runs 200 nautical miles out. Inside it, Peru controls the fishing.',rule:'Line from a port = strike. Loop = patrol. Tap a patrol = send it home. Each mission is short — miss the timer and you retry.',
+  tools:{},swarm:80,season:90,budget:1,waveMul:0.5,inflow:0.6,firstWave:30,cutters:3,win:S=>S.stock>40,stretch:S=>S.boarded<6,stretchTxt:'fewer than 6 boardings',lesson:'Cutters move the fleet. They don’t remove it.'},
+ {n:2,title:'Follow the Catch',fact:'30–150 refrigerated motherships keep the fleet at sea. They wait just past the line, where Peru can’t board them.',rule:'Tap the airfield: the plane flies a figure-8 and finds them. Motherships come into port — let them dock for a free inspection, or tap to stop them at sea.',
+  tools:{reefers:1,plane:1,calls:1},swarm:140,season:120,budget:1,waveMul:0.8,inflow:0.8,cutters:3,firstCall:22,goal:S=>S.records>=1,goalTxt:'Get one record on a mothership',win:S=>S.records>=1,stretch:S=>S.stops===0,stretchTxt:'no stop at sea',lesson:'The catch leaves your water for ships you can’t board.'},
+ {n:3,title:'Paperwork',fact:'Strike one is a notice to the ship’s owner and flag. Strike two bans it from your ports.',rule:'Tap a mothership: the helicopter sits on it. Tagged boats unloading under it are evidence; the helicopter flies it home to file a record. Two records ban a ship.',
+  tools:{reefers:1,plane:1,heli:1,calls:1,dodges:1,events:1},evRate:0.5,swarm:180,season:150,budget:1,waveMul:1,inflow:1,cutters:3,goal:S=>S.bans>=1,goalTxt:'Ban 1 mothership',win:S=>S.bans>=1,stretch:S=>!S.evLost,stretchTxt:'no evidence lost',lesson:'A ban moves a ship. Its sister takes its place.'},
+ {n:4,title:'The Armada',fact:'In the 2025–26 season, more than 400 vessels gathered at the edge of Argentina’s zone.',rule:'Everything you have. Hold the fish for one season.',
+  tools:{reefers:1,plane:1,heli:1,calls:1,dodges:1,list:1,events:1},bountyLocked:true,evRate:1,swarm:400,season:150,budget:0.85,budgetCut:true,waveMul:1.7,inflow:1.8,cutters:3,win:S=>S.stock>35,lesson:'Enforcement alone collapses.'},
+ {n:5,title:'Letters of Marque',fact:'Article I of the US Constitution lets the US Congress license private ships; Peru, as partner, provides the ports. About 55,000 Americans sailed as privateers in 1776–1815.',rule:'A listed ship shows a red seal. Tap it to post a bounty: privateers sail on their own whenever its fix is fresh. Each bounty costs a step of Relations.',
+  tools:{reefers:1,plane:1,heli:1,calls:1,dodges:1,list:1,bounty:1,relations:1,events:1},evRate:1,swarm:400,season:150,budget:0.85,waveMul:1.5,inflow:1.6,cutters:3,win:S=>S.stock>25,stretch:S=>S.stock>45,stretchTxt:'fish above 45',lesson:'Letters don’t win. They let you survive.'},
+ {n:6,title:'Pressure',fact:'Peru sells China about $22.5 billion a year. Every escalation has a price.',rule:'Relations now bite: escorts at 1, no port calls at 2, bounties frozen at 3. Finish with two dots or fewer.',
+  tools:TOOLS_ALL,evRate:1.6,swarm:300,season:150,budget:1,waveMul:1.2,inflow:1.3,cutters:3,win:S=>S.stock>35&&S.bj<=2,stretch:S=>S.bj===0,stretchTxt:'Relations clear at the end',lesson:'Every bounty spends standing. Pace them.'},
+ {n:7,title:'Command',fact:'The paper’s aim is not endless seizure but a cap on the fleet.',rule:'Everything, with no final whistle: seasons roll on until the fish or Relations give out. Keep the fleet’s profit under 20 for 40 seconds and Beijing will offer a cap.',
+  tools:TOOLS_ALL,evRate:1.6,swarm:320,season:240,budget:1,waveMul:1.3,inflow:1.3,cutters:3,cap:true,endless:true,win:S=>S.stock>35,lesson:'The aim is a cap, not endless seizure.'},
+ {n:8,title:'The Real Scale',view:1,scale:true,fact:'China counts 2,551 distant-water fishing vessels (2023). Outside estimates put up to ~17,000 able to fish distant waters (ODI 2020).',rule:'An animation, under a minute, then the numbers. Every pink dot is one fishing ship. The six grey specks are Peru’s offshore patrol ships.',
+  tools:{},swarm:400,season:42,budget:1,waveMul:1.4,inflow:1.4,cutters:6,win:S=>true,lesson:'At real scale no navy polices the fleet boat by boat. That is why the paper ends on a cap.'}
+];
+// ---------- missions: early levels are short, timed and failable; later ones guide inside the season ----------
+const anyBounty=S=>S.reefers.some(r=>r.bounty&&!r.gone)||S.loms>0;
+// tuning tools (Knobs, Unlock all, ⚙, diagnostics) show only with ?debug or #debug in the URL
+if(/[?&#]debug\b/.test(location.href)) document.documentElement.classList.add('debug');
+const MISSIONS={
+ 1:{only:true,list:[
+  {txt:'<b>STRIKE</b> · drag from a port out to a group of boats and lift. A cutter sails there and boards them.',t:20,done:S=>S.boarded>=1,fail:'No strike landed in time.',fact:'Peru’s zone runs 200 nautical miles out. Inside it, only Peru may board fishing boats.'},
+  {txt:'<b>PATROL</b> · draw a loop in the water that crosses itself. A cutter circles it.',t:15,done:S=>S.strokes.some(k=>k.kind==='loop'&&k.alive),fail:'No patrol went out.',fact:'A strike boards where your line ends, then the cutter goes home. A loop is different: the cutter stays and circles.'},
+  {txt:'<b>DISMISS</b> · tap the cutter on patrol, or its loop. It sails home.',t:15,done:S=>(S.recalls||0)>=1,fail:'The patrol was never called home.',fact:'The ring around a cutter is its endurance. A cutter on patrol can’t do anything else.'},
+  {txt:'<b>TAG</b> · loop over boats. Boats your cutter gets close to turn green (tagged) and scatter. Tag 3.',t:30,done:S=>S.tags-S.mBase.tags>=3,fail:'Your patrol tagged too few boats.',fact:'A patrol doesn’t board. It tags the boats it sees, and they scatter from the water it guards.'},
+  {txt:'<b>HOLD</b> · a big wave is coming. Keep the fish above 50 for 30 s: loop where boats gather.',t:30,hold:true,keep:S=>S.stock>50,fail:'The fish dropped below 50. Loop where the wave lands.',script:[{at:0,id:'wave'},{at:10,id:'nino'}],fact:'The squid grounds drift. The fleet follows them, and you follow the fleet.'}]},
+ 2:{only:true,list:[
+  {txt:'<b>PLANE</b> · tap the runway. The plane flies a figure-8 over the motherships.',t:15,done:S=>S.air.state!=='port',fail:'The plane never left the ground.',fact:'The catch doesn’t stay on the fishing boats. It goes to refrigerated motherships waiting past the line.'},
+  {txt:'<b>RECORD</b> · loop boats to tag them. Tagged boats unloading under the plane are evidence; tap the runway to land the plane and file it.',t:80,done:S=>S.records>=1,fail:'No record on any mothership.',fact:'A record ties a mothership to fish taken inside Peru’s zone. That’s evidence Peru can act on.'}]},
+ 3:{only:true,list:[
+  {txt:'<b>HELICOPTER</b> · tap a mothership you can see. The helicopter follows it.',t:15,done:S=>S.heli.state!=='port'&&S.heli.state!=='refuel',fail:'The helicopter stayed on the pad.',fact:'Motherships go dark or swap places to dodge watchers. The helicopter keeps eyes on one.'},
+  {txt:'<b>EVIDENCE</b> · loop boats near the watched ship. When a tagged boat unloads under the helicopter, the ship flashes gold: +1 evidence. Get 3.',t:40,done:S=>S.reefers.some(r=>!r.gone&&r.bubbles>=3)||S.records>=1,fail:'Not enough evidence gathered.',fact:'Each tagged boat unloading at a mothership is a documented transfer of fish caught inside Peru’s zone.'},
+  {txt:'<b>FILE</b> · with 3 evidence aboard, tap the helicopter (or its button) to fly home. Landing files a record.',t:50,done:S=>S.records>=1,fail:'No evidence filed.',fact:'Records add up: notice, then a ban from Peru’s ports.'},
+  {txt:'<b>BAN</b> · two records on the same mothership ban it from Peru’s ports. Keep the helicopter on one ship. Ban 1.',t:70,done:S=>S.bans>=1,fail:'No ban in time.',fact:'A banned mothership leaves. Watch what replaces it.'}]},
+ 4:{list:[
+  {txt:'Hold the fish above <b>35</b> to the end of the season',fact:'Hundreds of distant-water squid jiggers work the edge of Peru’s zone each season.'}],
+  facts:[{at:40,txt:'Your budget is cut every month. Every boarding and flight draws on it.'},{at:80,txt:'The bounty button is locked: the US Congress has not authorised Letters of Marque. Peru can’t issue them alone.'}]},
+ 5:{list:[
+  {txt:'<b>LIST</b> · a third record lists a mothership (it turns red).',done:S=>S.listed>=1,fact:'A Letter of Marque licenses private ships to seize an enemy’s vessels. The power is written into Article I of the US Constitution.'},
+  {txt:'<b>BOUNTY</b> · tap POST BOUNTY. Privateers sail from their dock on their own while the ship’s position is fresh. Each bounty and each stop at sea costs a Relations dot; at 3, new bounties freeze.',done:anyBounty,fact:'Privateers are paid from the prize, not your budget. Every bounty still costs standing with Beijing.'},
+  {txt:'Hold the fish above <b>25</b> to the end',fact:'Each seized mothership strands the boats it supplied. The whole fleet thins.'}]},
+ 6:{list:[
+  {txt:'Take <b>one</b> mothership under a Letter of Marque',done:S=>S.loms>=1,fact:'Beijing answers seizures with escorts, port closures and trade pressure.'},
+  {txt:'Finish with <b>Relations at 2 or less</b> and fish above 35',fact:'Relations cool with time. Pace your bounties.'}]},
+ 7:{list:[
+  {txt:'Push fleet profit under <b>20</b> and hold it for 40 s',fact:'The goal is a negotiated cap on the fleet, not endless seizure.'}]},
+ 8:{list:[{txt:'Watch. Pink dots are fishing ships; grey specks are Peru’s patrol ships.'}],facts:[
+  {at:2,txt:'Peru has six offshore patrol vessels at most (sources say 2–6). They may only act inside the 200-mile line.'},
+  {at:7,txt:'Several hundred Chinese squid jiggers gather just past Peru’s line each season, as tracking maps show.'},
+  {at:15,txt:'Squid is one fleet. China’s official distant-water fleet is 2,551 vessels (2023), fishing tuna, trawl and more, in every ocean. Here it is on one coast.'},
+  {at:27,txt:'Outside estimates: ~17,000 vessels able to fish distant waters (ODI 2020), served by up to 150 motherships.'}]}};
+LEVELS.forEach(L=>{ const m=MISSIONS[L.n]; if(m){ L.missions=m.list; L.only=!!m.only; L.mfacts=m.facts||[]; if(m.only){ L.goal=null; } } });
+const FACTQ=[];
+function fact(key,txt,urgent){ if(!S||S.ended) return; S.factSeen=S.factSeen||{}; if(S.factSeen[key]) return; S.factSeen[key]=1; if(urgent){ FACTQ.unshift(txt); S.factT=Math.min(S.factT||0,0); } else FACTQ.push(txt); if(FACTQ.length>3) FACTQ.splice(3); }
+function pumpFacts(dt){ S.factT=(S.factT||0)-dt; if(S.factT<=0&&FACTQ.length){ const t=FACTQ.shift(); note('facts',t); rec('fact',{txt:t}); toast(`<span style="color:#9fc9ff;letter-spacing:.06em;font-size:11px">WHY</span><br>${t}`,false,6500); S.factT=10; } }
+function curM(){ return S&&S.L.missions?S.L.missions[S.mi]:null; }
+function startMission(i){ S.mi=i; const m=curM(); if(!m) return; S.mBase={tags:S.tags,boarded:S.boarded}; S.mLeft=m.t||null; S.mT=0; if(m.fact) fact('m'+S.L.n+'_'+i,m.fact);
+  if(m.script) S.mScript=m.script.map(e=>({at:e.at,id:e.id})); }
+function updateMissions(dt){ const L=S.L, m=curM(); pumpFacts(dt); if(L.scale) scaleDirector(dt); for(const f of L.mfacts) if(!f.shown&&S.t>=f.at){ f.shown=1; fact('t'+f.at,f.txt); }
+  if(!m) return; S.mT+=dt; if(S.mScript) for(const e of S.mScript) if(!e.done&&S.mT>=e.at){ e.done=1; if(e.id==='wave'){ S.bigWave=7; S.waveT=0; continue; } const c=CARDS.find(k=>k.id===e.id); if(c){ toast(`⚠ <b>${c.name}</b> in 3 s`,true); setTimeout(()=>{ if(S&&!S.ended) fireCard(c); },3000); } }
+  if(m.t!=null) S.mLeft=Math.max(0,m.t-S.mT);
+  const pass=()=>{ SND.step(); buzz(30); toast(`✓ <b>Mission ${S.mi+1} done</b>`); const nx=S.mi+1; if(nx>=L.missions.length){ if(L.only) end('win'); else S.mi=nx; } else startMission(nx); };
+  if(m.hold){ if(!m.keep(S)){ S.failTxt=m.fail; end('fail'); return; } if(S.mT>=m.t) pass(); return; }
+  if(m.done&&m.done(S)){ pass(); return; }
+  if(m.t!=null&&S.mT>=m.t){ S.failTxt=m.fail; end('fail'); } }
+let LVL=0;
+save.stars=save.stars||{}; save.l4=save.l4||0;
+function persistL(){ persist(); }
+// ---------- teaching layer: notebook, argument ladder, source ----------
+save.nb=save.nb||{facts:[],cards:[]}; save.nb.facts=save.nb.facts||[]; save.nb.cards=save.nb.cards||[];
+function note(kind,v){ const a=save.nb[kind]; if(!v||a.includes(v)) return; a.push(v); persist(); }
+const PAPER='<i>Contesting the PRC’s Fishing Armada</i> (J.R. Williamson, DARC, May 2025)';
+const LIMIT={5:'On the high seas only a ship’s flag state may board it. Most states would treat a privateer seizure as piracy.',6:'The paper doesn’t price privateers or say who checks them, and seized crews are often trafficked workers.'};
+function stepDone(n){ return (save.stars[n]||0)>0||(n===4&&save.l4>=1); }
+function argLadder(cur,open){ const done=LEVELS.filter(L=>stepDone(L.n)||L.n===cur).length;
+  return `<details style="font-size:13px;margin:8px 0"${open?' open':''}><summary style="font-weight:700;cursor:pointer">The argument so far · ${done}/${LEVELS.length}</summary><ol style="margin:6px 0 0;padding-left:20px;line-height:1.45">${LEVELS.map(L=>{ const on=stepDone(L.n)||L.n===cur; return `<li style="${on?'':'color:#b3a98f'}${L.n===cur?';font-weight:800':''}">${on?L.lesson:'—'}</li>`; }).join('')}</ol></details>`; }
+function notebook(){ const nb=save.nb; const cards=nb.cards.map(id=>CARDS.find(c=>c.id===id)).filter(Boolean);
+  show(`<div class="k">Notebook</div><h2>What you’ve learned</h2>${argLadder(0,true)}<p style="font-size:13px;margin:10px 0 4px"><b>Facts met · ${nb.facts.length}</b></p>${nb.facts.length?`<ul style="font-size:13px">${nb.facts.map(f=>`<li>${f}</li>`).join('')}</ul>`:'<p style="font-size:13px;color:#7a6a45">Play a level and the facts you meet are kept here.</p>'}${cards.length?`<p style="font-size:13px;margin:10px 0 4px"><b>Events met · ${cards.length}</b></p><ul style="font-size:13px">${cards.map(c=>`<li><b>${c.name}.</b> ${c.txt}${c.src?` <span style="color:#7a6a45">Real: ${c.src}</span>`:''}</li>`).join('')}</ul>`:''}<p style="font-size:12.5px;color:#7a6a45">Source: ${PAPER}. This game models the paper’s argument; it does not endorse it.</p><button class="go" id="nbk">Back</button>`); $('#nbk').onclick=title; }
+function T(k){ return S&&S.L&&!!S.L.tools[k]; }
+let SEASON=150, MONTH=37.5; const PASS_EVERY=30, FUEL=45, HFUEL=50, REFUEL_RATE=4, FIX_FRESH=15, FIX_LOST=35, REC_GAP=3, REC_STALE=90;
+// ---------- knobs (owner-tunable) ----------
+const KN={swarm:300, avoid:1.6, fearDecay:0.14, inflow:1.0, bubble:1.0, cutSpeed:1.6, endurance:45, budget:100, cutters:3, reach:0.5, speed:1};
+const KNOBS=[['swarm','Swarm size',80,400,10],['avoid','Avoidance speed',0.2,3,0.1],['fearDecay','Fear fades (per s)',0.02,0.5,0.01],['inflow','Inward flow',0,3,0.1],['bubble','Bubble size',0.3,3,0.1],['cutSpeed','Cutter speed',0.5,2,0.1],['endurance','Endurance (s)',20,120,5],['budget','Monthly budget',40,200,10],['cutters','Cutters',1,5,1],['reach','Cutter range',0.3,1,0.05],['speed','Game speed (×)',0.5,3,0.25]];
+// ---------- play log (opt-in, for playtests; stays in memory until downloaded) ----------
+const REC={on:false,log:[]};
+function rec(type,d){ if(!REC.on) return; if(REC.log.length>=5000) REC.log.shift(); REC.log.push(Object.assign({at:new Date().toISOString(),level:S?S.L.n:null,t:S?+S.t.toFixed(1):null,type},d||{})); }
+function recDownload(){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({game:'ARMADA',knobs:KN,events:REC.log},null,1)],{type:'application/json'})); a.download='armada-playlog-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json'; document.body.appendChild(a); a.click(); a.remove(); }
+const dist=(a,b)=>Math.hypot(a.u-b.u,a.v-b.v);
+function moveTo(o,tu,tv,sp,dt){ const dx=tu-o.u,dy=tv-o.v,d=Math.hypot(dx,dy); if(d<1e-6) return true; const st=sp*dt; if(d<=st){ o.u=tu;o.v=tv; return true;} o.u+=dx/d*st; o.v+=dy/d*st; o.a=Math.atan2(dy,dx); return false; }
+function uAt(v,f){ let u=coastXat(v)-f*NMI200*0.7, n=0; while(n++<300&&coastDist(u,v)<f*NMI200) u-=2; return u; }
+const SND={ tag(){ tone(900,0.03,'sine',0.02); }, board(k){ tone(150,0.1,'square',0.06,-50); setTimeout(()=>tone(420+k*40,0.1,'triangle',0.06),90); }, rec(k){ tone(520+k*160,0.07,'triangle',0.06); }, listed(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.12,'square',0.06),i*60)); }, lom(){ tone(60,0.5,'sawtooth',0.12,-20); [392,494,587,784,1175].forEach((f,i)=>setTimeout(()=>tone(f,0.16,'triangle',0.1),200+i*80)); }, pass(){ tone(1600,0.4,'sine',0.03,-900); }, step(){ tone(90,0.35,'square',0.08,-30); }, plane(){ tone(300,0.3,'sawtooth',0.03,120); }, bubble(){ tone(70,0.4,'sine',0.1); tone(1200,0.12,'sine',0.04,-600); }, send(){ tone(380,0.18,'triangle',0.05,200); }, no(){ tone(160,0.12,'square',0.05,-40); }, wave(){ tone(110,0.5,'sawtooth',0.05,-20); }, month(){ [523,659].forEach((f,i)=>setTimeout(()=>tone(f,0.12,'triangle',0.07),i*90)); }, end(){ [400,330,260,180].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'sawtooth',0.05),i*120)); }, win(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'triangle',0.08),i*90)); } };
+function cutterShape(sx,sy,a,len,grey){ ctx.save(); ctx.translate(sx,sy); ctx.rotate(a); const ic=S&&S.L.scale?ICON*0.6:ICON; ctx.scale(ic,ic); const L=len; OV.push(`<g transform="${ovM()}"${ovA()}><path d="M${L*0.7} 0L${L*0.3} ${-L*0.28}L${-L*0.55} ${-L*0.24}L${-L*0.55} ${L*0.24}L${L*0.3} ${L*0.28}Z" fill="${grey?'#6f8aa0':'#3DDC97'}" stroke="#0B2545" stroke-width="1.5" stroke-linejoin="round"/><path d="M${L*0.05} ${-L*0.26}L${L*0.25} ${L*0.26}" stroke="#D8322B" stroke-width="2.4"/></g>`); ctx.restore(); }
+function reefer2(sx,sy,a,len,col,alpha){ ctx.save(); ctx.translate(sx,sy); ctx.rotate(a); ctx.scale(ICON,ICON); if(alpha!=null) ctx.globalAlpha=alpha; const L=len*2.3,Wd=len*0.7; OV.push(`<g transform="${ovM()}"${ovA()}><path d="M${L*0.5} 0L${L*0.32} ${-Wd}L${-L*0.5} ${-Wd}L${-L*0.5} ${Wd}L${L*0.32} ${Wd}Z" fill="${col}" stroke="#0B2545" stroke-width="2" stroke-linejoin="round"/><rect x="${-L*0.48}" y="${-Wd*0.62}" width="${L*0.24}" height="${Wd*1.24}" fill="#fff"/></g>`); ctx.restore(); }
+function mapExtras(){ if(!S) return ''; let h=''; const B='font-weight="700"';
+  const seen=new Set(); for(const c of S.cutters){ if(seen.has(c.home.name)) continue; seen.add(c.home.name); const [x,y]=P(c.home.u,c.home.v);
+    if(S.L.scale){ h+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#5b6b7a" stroke="#fff" stroke-width="1"/>`+svgText(c.home.name,x+8,y,11,'#0B2545','start',B); continue; }
+    h+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="22" fill="#0B2545" opacity=".18"/><rect x="-13" y="-6" width="26" height="12" rx="2" fill="#5b6b7a" stroke="#fff" stroke-width="2"/></g>`+(x+30+c.home.name.length*16*0.6>W-6?svgText(c.home.name,x-30,y,16,'#0B2545','end',B):svgText(c.home.name,x+30,y,16,'#0B2545','start',B)); }
+  if(T('plane')){ const [x,y]=P(S.air.hu,S.air.hv); h+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(-29)"><rect x="-36" y="-7" width="72" height="14" rx="2" fill="#5b6b7a" stroke="#fff" stroke-width="2"/><line x1="-28" y1="0" x2="28" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="6 5"/></g>`; }
+  if(T('heli')){ const [x,y]=P(S.heli.hu,S.heli.hv); h+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="#5b6b7a" stroke="#fff" stroke-width="2"/>`+svgText('H',x,y,15,'#fff','middle','font-weight="800"'); }
+  if(T('bounty')){ const [x,y]=P(S.priv.hu,S.priv.hv); h+=`<rect x="${(x-13).toFixed(1)}" y="${(y-4).toFixed(1)}" width="26" height="9" rx="2" fill="#E0A52E" stroke="#0B2545" stroke-width="1.6"/>`+`<rect x="${(x-118).toFixed(1)}" y="${(y+10).toFixed(1)}" width="100" height="22" rx="11" fill="#E0A52E" stroke="#0B2545" stroke-width="1.5"/>`+svgText('Privateers',x-68,y+21,13,'#0B2545','middle',B); }
+  return h; }
+function ovArc(x,y,r,a0,a1,col,lw){ if(a1-a0<0.01) return; const [cx,cy]=ovPt(x,y); const big=(a1-a0)%6.2832>Math.PI?1:0; const full=a1-a0>=6.28; let d; if(full){ d=`M${(cx+r).toFixed(1)} ${cy.toFixed(1)}a${r} ${r} 0 1 1 ${-2*r} 0a${r} ${r} 0 1 1 ${2*r} 0`; } else { const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1); d=`M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${big} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`; } OV.push(`<path d="${d}" fill="none" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"${ovA()}/>`); }
+function heliIcon(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(ICON,ICON); const c=14*Math.cos(tGlobal*25), sn=14*Math.sin(tGlobal*25); OV.push(`<g transform="${ovM()}"${ovA()}><ellipse rx="9" ry="5" fill="#fff" stroke="#0B2545" stroke-width="1.6"/><rect x="-14" y="-1.5" width="10" height="3" fill="#fff" stroke="#0B2545" stroke-width="1"/><path d="M${-c} ${-sn}L${c} ${sn}" stroke="#fff" stroke-width="1.6"/></g>`); ctx.restore(); }
+function planeIcon(sx,sy,a){ ctx.save(); ctx.translate(sx,sy); ctx.rotate(a); ctx.scale(ICON,ICON); OV.push(`<g transform="${ovM()}"${ovA()} fill="#fff" stroke="#0B2545" stroke-width="1.6" stroke-linejoin="round"><path d="M13 0L4 -3L-8 -3L-12 -7L-14 -7L-11 0L-14 7L-12 7L-8 3L4 3Z"/><path d="M3 -2L-2 -15L-5 -15L-4 -2L-4 2L-5 15L-2 15L3 2Z"/></g>`); ctx.restore(); }
+function hint(t,left){ if(!S) return; S.msg={t,left:left||3}; }
+// ---------- fear field ----------
+const CELL=9;
+function fearInit(){ const [u0,v0]=S2M(-60,topPad-60), [u1,v1]=S2M(W+60,H-botPad+60); S.fu0=u0; S.fv0=v0; S.fw=Math.ceil((u1-u0)/CELL); S.fh=Math.ceil((v1-v0)/CELL); S.fear=new Float32Array(S.fw*S.fh); S.hits=new Float32Array(S.fw*S.fh); }
+const fidx=(u,v)=>{ const x=Math.floor((u-S.fu0)/CELL), y=Math.floor((v-S.fv0)/CELL); if(x<0||y<0||x>=S.fw||y>=S.fh) return -1; return y*S.fw+x; };
+function fearAt(u,v){ const i=fidx(u,v); return i<0?0:S.fear[i]; }
+function addFear(u,v,amt,r){ const cr=Math.ceil(r/CELL); const cx=Math.floor((u-S.fu0)/CELL), cy=Math.floor((v-S.fv0)/CELL); for(let y=cy-cr;y<=cy+cr;y++) for(let x=cx-cr;x<=cx+cr;x++){ if(x<0||y<0||x>=S.fw||y>=S.fh) continue; const du=(x+0.5)*CELL+S.fu0-u, dv=(y+0.5)*CELL+S.fv0-v; const d=Math.hypot(du,dv); if(d>r) continue; const i=y*S.fw+x; S.fear[i]=Math.min(3,S.fear[i]+amt*(1-d/r)); } }
+function fearGrad(u,v){ const h=CELL; return [(fearAt(u+h,v)-fearAt(u-h,v))/(2*h),(fearAt(u,v+h)-fearAt(u,v-h))/(2*h)]; }
+// ---------- level ----------
+// Level 8 crowd: up to `max` open-sea positions, placed a little each frame so the level starts instantly
+function makeCrowd(max){ const [u0,v0]=S2M(0,topPad), [u1,v1]=S2M(W,H-botPad); const cl=[]; const at=(lat,size,w)=>{ const [,v]=toImg(-80,lat); for(let i=0;i<w;i++) cl.push([v,size]); };
+  at(-16.4,0.55,10); at(-15.6,0.4,5); at(-14.6,0.35,3); for(let lat=-13.5;lat<=-5;lat+=0.9) at(lat,0.18,1); at(-18,0.3,1);
+  return {u:new Float32Array(max),v:new Float32Array(max),ph:new Float32Array(max),max,placed:0,tries:0,box:[u0,v0,u1,v1],cl,n:0,target:0}; }
+const gauss=()=>{ let a=0; for(let i=0;i<4;i++) a+=Math.random(); return (a-2)*1.73; };
+// like the night-lights imagery: tight clusters just past the 200-mile line (most of the official fleet within ~30 nm of it), spreading out for the outside estimate
+function fillCrowd(C,budget){ const [u0,v0,u1,v1]=C.box; while(budget-->0&&C.placed<C.max&&C.tries<C.max*12){ C.tries++; const c=C.cl[(Math.random()*C.cl.length)|0], spread=C.placed<2551?0.05:0.05+0.12*(C.placed-2551)/Math.max(1,C.max-2551);
+    const v=c[0]+gauss()*NMI200*0.12*c[1]*(1+spread*6); if(v<v0||v>v1) continue; const u=uAt(v,1.01+Math.abs(gauss())*spread*(c[1]>0.3?1:0.6)); if(u<u0||onLand(u,v)||!highSeas(u,v)) continue; C.u[C.placed]=u; C.v[C.placed]=v; C.ph[C.placed]=Math.random()*6.283; C.placed++; } if(C.placed<C.max&&C.tries>=C.max*12) C.max=C.placed; }
+// ---------- Level 8: the real scale, played as an animation ----------
+const NM=NMI200/200, R_CUT=12*NM, R_PLANE=25*NM; // ~12 nm: generous patrol-ship radar range against a small boat
+function scaleDirector(dt){ const C=S.crowd; fillCrowd(C,1200); S.budget=100;
+  const tg=S.t>=26?C.max:S.t>=14?2551:0; if(tg>C.target){ C.target=tg; kick(3); SND.step(); } if(C.n<C.target) C.n=Math.min(C.target,C.placed,C.n+dt*(C.target>2551?2600:900));
+  const mTarget=S.t>=26?150:S.t>=14?30:0; S.mships=S.mships||[]; while(S.mships.length<mTarget&&S.mships.length<C.placed){ const i=(Math.random()*C.placed)|0, v=C.v[i]; S.mships.push([uAt(v,1.03+Math.random()*0.06),v,Math.PI*(0.9+Math.random()*0.2)]); }
+  // patrol ships needed to keep every fishing ship within ~12 nm radar range, for each fleet size
+  S.need=S.need||{}; const live=S.boats.filter(b=>!b.gone).map(b=>[b.u,b.v]);
+  if(S.need.local==null&&S.t>=3) S.need.local=coverNeed(live);
+  if(S.need.official==null&&C.target===2551&&C.n>=2551) S.need.official=coverNeed(live.concat(crowdPts(C,2551)));
+  if(S.need.estimate==null&&C.target>2551&&C.n>=C.max) S.need.estimate=coverNeed(live.concat(crowdPts(C,C.max))); }
+function crowdPts(C,n){ const a=[]; for(let i=0;i<n;i++) a.push([C.u[i],C.v[i]]); return a; }
+function coverNeed(pts){ const R=R_CUT, dx=R*1.73, dy=R*1.5, ship=new Map(); let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
+  for(const p of pts){ u0=Math.min(u0,p[0]); u1=Math.max(u1,p[0]); v0=Math.min(v0,p[1]); v1=Math.max(v1,p[1]); const k=Math.floor(p[0]/R)+','+Math.floor(p[1]/R); (ship.get(k)||ship.set(k,[]).get(k)).push(p); }
+  const near=(u,v)=>{ const cu=Math.floor(u/R), cw=Math.floor(v/R); for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ const L2=ship.get((cu+a)+','+(cw+b)); if(L2) for(const p of L2){ const du=p[0]-u,dv=p[1]-v; if(du*du+dv*dv<R*R) return true; } } return false; };
+  let n=0; for(let j=0,v=v0-R;v<=v1+R;j++,v+=dy) for(let u=u0-R+(j%2?dx/2:0);u<=u1+R;u+=dx) if(near(u,v)) n++; return n; }
+function makeLevel(){ idx=LEVELS[LVL].view||0; layout(); const L=LEVELS[LVL]; SEASON=L.season; MONTH=L.season/4; S={L,stops:0,bans:0,evLost:false,capT:0,fx:{},evT:rand(25,40),evQ:null,evN:0,t:0,left:SEASON,month:0,budget:KN.budget*L.budget,stock:100,profit:50,boats:[],cutters:[],seized:[],strokes:[],msg:null,hint:'',ended:null,waveT:14,waveN:0,wave:null,boarded:0,tags:0,bubbles:0,slow:0,down:null,trail:[],hist:[],histT:0,firsts:{},broke:false,speed:1};
+  fearInit(); const [v0,v1]=visV();
+  const NSW=Math.round(L.swarm*KN.swarm/300); for(let i=0;i<NSW;i++) spawn(i<NSW*0.3?'in':'out'); if(L.firstWave) S.waveT=L.firstWave;
+  const ports=PORTS.filter(p=>!p.far).map(p=>{ const [u,v]=toImg(p.lon,p.lat); return {u,v,name:p.name}; });
+  const allP=PORTS.map(p=>{ const [u,v]=toImg(p.lon,p.lat); return {u,v,name:p.name}; }); const pick=['Callao','Chimbote','Pisco','Paita','Matarani'].map(n=>allP.find(p=>p.name===n));
+  const NC=clamp(L.cutters+(KN.cutters-3),1,L.scale?6:5); for(let i=0;i<NC;i++){ const p=pick[i%pick.length]; S.cutters.push({id:i,u:p.u,v:p.v,a:Math.PI,home:p,state:'port',end:KN.endurance,job:null,seg:0,prog:0,loiter:0,prizes:0}); }
+  S.hots=[]; S.hotT=0; for(let i=0;i<3;i++) newHot(true); S.reefers=[]; S.bj=0; S.bjT=0; S.passT=PASS_EVERY; S.flash=0; S.profitCap=100; S.records=0; S.listed=0; S.loms=0;
+  const names=[['Hai Feng','Panama'],['Fu Yuan','Liberia'],['Lu Rong','Panama'],['Zhong Yu','China'],['Ning Tai','Liberia']];
+  [0.18,0.4,0.62,0.84].forEach((fy,i)=>{ const v=v0+(v1-v0)*fy; const u=clearOfPanel(uAt(v,1.25),v); S.reefers.push({id:i,u,v,hu:u,hv:v,a:Math.PI*0.95,name:names[i][0],flag:names[i][1],hold:rand(0.1,0.4),stamps:0,listed:false,known:false,fix:null,dark:0,warn:null,escT:0,state:'park',rot:0,lastRec:-99,cool:0,gone:false,replaceT:0,escort:false,prog:0,callT:L.firstCall?(i===1?L.firstCall:rand(50,80)):rand(25,60),call:null,fed:0,bubbles:0,bounty:false}); });
+  for(const b of S.boats) assignReefer(b);
+  const [au,av]=toImg(-76.85,-10.35); const [pu,pv]=toImg(-75.16,-15.36); S.air={u:au,v:av,hu:au,hv:av,state:'port',job:null,fuel:FUEL,a:0,ph:0,wp:0,kind:'plane'}; S.heli={u:au+52/K,v:av,hu:au+52/K,hv:av,state:'port',job:null,fuel:HFUEL,a:0,ph:0,wp:0,kind:'heli'}; S.priv={u:pu,v:pv,hu:pu,hv:pv,state:'port',tgt:null,a:Math.PI,search:0};
+  if(L.scale){ S.cutters.forEach((c,i)=>{ const [v0,v1]=visV(); const v=clamp(c.home.v+(i-2.5)*NMI200*0.12,v0+30,v1-30); c.lineAt=[uAt(v,0.96),v]; }); S.crowd=makeCrowd(17000-L.swarm); const T0=makeCrowd(L.swarm); fillCrowd(T0,1e6); S.boats.forEach((b,i)=>{ if(i<T0.placed){ b.u=b.gu=T0.u[i]; b.v=b.gv=T0.v[i]; } }); }
+  S.hint='Draw a <b>loop</b> to patrol, a <b>line</b> to board.'+(T('reefers')?' Tap ships past the line.':''); paintTools(); }
+function newHot(now){ const [v0,v1]=visV(); let v,tries=0; do{ v=rand(v0+50,v1-50); tries++; }while(tries<20&&S.hots.some(h=>Math.abs(h.v-v)<160)); const insideSide=S.hots.filter(h=>h.side==='in').length<=S.hots.filter(h=>h.side==='out').length; const u=uAt(v,insideSide?rand(0.5,0.8):rand(1.1,1.4)); const h={u,v,side:insideSide?'in':'out',r:NMI200*rand(0.28,0.4),life:rand(35,55),age:0,warm:now?0:8,dv:rand(-1,1)*6}; S.hots.push(h); return h; }
+function liveHots(){ return S.hots.filter(h=>h.warm<=0); }
+function nearestHot(v){ const hs=liveHots(); if(!hs.length) return null; return hs.sort((a,b)=>Math.abs(a.v-v)-Math.abs(b.v-v))[0]; }
+function clearOfPanel(u,v){ return u;  const [x,y]=P(u,v); const el=document.getElementById('side'); const ph=(el?el.offsetHeight:150)+topPad+14; if(y<ph&&x<126){ const um=S2M(128,y)[0]; if(highSeas(um,v)&&coastDist(um,v)>NMI200*1.04) return um; } return u; }
+function assignReefer(b){ if(b.leave) return; let best=null,bd=1e9; for(const r of S.reefers){ if(r.gone) continue; const d=Math.abs(r.v-b.v)+rand(0,60); if(d<bd){ bd=d; best=r; } } b.rid=best?best.id:-1; }
+function reeferOf(b){ const r=S.reefers[b.rid]; return r&&!r.gone?r:null; }
+function turn(o,k){ if(o.da==null) o.da=o.a; let d=o.a-o.da; d=Math.atan2(Math.sin(d),Math.cos(d)); o.da+=d*Math.min(1,k); }
+// the real-scale level shows no motherships, so it shows no mothership labels
+function rFloat(u,v,t,c,z){ if(!S.L.scale) floatText(u,v,t,c,z); }
+function fixAge(r){ return r.fix?S.t-r.fix.t:1e9; }
+function fixRadius(r){ const age=fixAge(r); return Math.min(NMI200*0.9, age*(r.dark>0?5:3)); }
+function fixFresh(r){ return fixAge(r)<FIX_FRESH; }
+function seeReefer(r){ r.known=true; r.fix={u:r.u,v:r.v,t:S.t}; }
+function visV(){ return [S2M(0,topPad+20)[1], S2M(0,H-botPad-20)[1]]; }
+function spawn(where,atV){ const [v0,v1]=visV(); const v=atV!=null?clamp(atV+rand(-40,40),v0,v1):rand(v0,v1); let u=uAt(v,where==='in'?rand(0.45,0.95):rand(1.03,1.6)); const um=playU0(); if(u<um+8) u=um+8+rand(0,30);
+  const b={u,v,vu:0,vv:0,gu:u,gv:v,a:rand(0,6.28),ph:rand(0,6.28),dark:Math.random()<0.22,tag:0,gone:false,flee:0,run:0,shuttleT:rand(15,60),rid:-1}; if(S.reefers) assignReefer(b); S.boats.push(b); return b; }
+const inside=b=>inEEZ(b.u,b.v);
+// ---------- strokes ----------
+let lastX=0,lastY=0;
+cv.addEventListener('pointerdown',e=>{ e.preventDefault(); audio(); if(!S||S.ended||S.paused||S.L.scale) return; if(e.clientY<topPad||e.clientY>H-botPad) return; S.down=true; try{ cv.setPointerCapture(e.pointerId); }catch(_){} S.trail=[{x:e.clientX,y:e.clientY}]; lastX=e.clientX; lastY=e.clientY; updateCand(); });
+cv.addEventListener('pointermove',e=>{ if(!S||!S.down) return; if(Math.hypot(e.clientX-lastX,e.clientY-lastY)<4) return; S.trail.push({x:e.clientX,y:e.clientY}); lastX=e.clientX; lastY=e.clientY; updateCand();
+  const x=selfCross(S.trail); if(x){ const loop=[x.p,...S.trail.slice(x.i+1,S.trail.length-1),x.p]; S.down=false; S.trail=[]; if(polyArea(loop)>1800) commitStroke(loop,true); else SND.no(); } });
+const up=e=>{ if(!S||!S.down) return; S.down=false; commitStroke(S.trail); S.trail=[]; S.cand=null; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+function segX(a,b,c,d){ const r=[b.x-a.x,b.y-a.y], s=[d.x-c.x,d.y-c.y]; const den=r[0]*s[1]-r[1]*s[0]; if(Math.abs(den)<1e-9) return null; const t=((c.x-a.x)*s[1]-(c.y-a.y)*s[0])/den, u=((c.x-a.x)*r[1]-(c.y-a.y)*r[0])/den; if(t<0||t>1||u<0||u>1) return null; return {x:a.x+r[0]*t,y:a.y+r[1]*t}; }
+function selfCross(tr){ const n=tr.length; if(n<4) return null; const a=tr[n-2], b=tr[n-1]; for(let i=0;i<n-3;i++){ const p=segX(tr[i],tr[i+1],a,b); if(p) return {i,p}; } return null; }
+function nearBase(p){ const [ax,ay]=P(S.air.hu,S.air.hv),[hx,hy]=P(S.heli.hu,S.heli.hv); return Math.hypot(ax-p.x,ay-p.y)<40||Math.hypot(hx-p.x,hy-p.y)<26; }
+function updateCand(){ const tr=S.trail; if(!tr.length) return; const hs=tr.filter(p=>{ const [u,v]=S2M(p.x,p.y); return highSeas(u,v); }); const p0=tr[0]; const [u0,v0]=S2M(p0.x,p0.y); const airStroke=hs.length>=tr.length*0.5||nearBase(p0);
+  if(airStroke){ S.cand={kind:'none',ok:false,label:'past the line: tap, don\'t draw'}; return; }
+  if(onLand(u0,v0)){ S.cand={kind:'none',ok:false,label:'start on the water'}; return; }
+  const c=freeCutter({u:u0,v:v0}); S.cand=c?{kind:'cutter',ok:true,c,label:'CUTTER '+(c.id+1)+(c.state==='patrol'?' (leaves its patrol)':'')}:{kind:'cutter',ok:false,label:S.budget<=0?'no budget':'all cutters busy — start on one to redirect it'}; }
+function polyLen(p){ let L=0; for(let i=1;i<p.length;i++) L+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y); return L; }
+function polyArea(p){ let a=0; for(let i=0;i<p.length;i++){ const j=(i+1)%p.length; a+=p[i].x*p[j].y-p[j].x*p[i].y; } return Math.abs(a)/2; }
+function commitStroke(tr,forceLoop,scripted){ rec(tr.length<2?'tap':'stroke',{points:tr.length,len:Math.round(polyLen(tr)),loop:!!forceLoop,x:Math.round(tr[0].x),y:Math.round(tr[0].y)}); if(tr.length<2){ tapAt(tr[0]); return; } const L=polyLen(tr); if(L<24){ tapAt(tr[0]); return; }
+  if(!scripted&&nearBase(tr[0])){ tapAt(tr[0]); return; }
+  // legality: keep points inside the line
+  const pts=tr.map(p=>{ const [u,v]=S2M(p.x,p.y); return {x:p.x,y:p.y,u,v,ok:inEEZ(u,v)}; }); const okN=pts.filter(p=>p.ok).length; if(okN<pts.length*0.5){ const hs=pts.filter(p=>highSeas(p.u,p.v)); if(hs.length>=pts.length*0.5){ SND.no(); fact('highseas','High seas. Fishing here is mostly unregulated, not illegal, and only the ship’s flag state may board it.',true); const m=pts[Math.floor(pts.length/2)]; floatText(m.u,m.v,'past the line: tap, don\'t draw','#ffd6c2',11); hint('Past the line you <b>tap</b>: the airfield for the plane, a ship for the helicopter, a seal to post a bounty.',4); return; } SND.no(); const m=pts[Math.floor(pts.length/2)]; floatText(m.u,m.v,'not at sea','#ffd6c2',11); return; }
+  const c0=freeCutter({u:pts.find(p=>p.ok).u,v:pts.find(p=>p.ok).v}); const RR=c0?cutRange():1e9;
+  const okPts=pts.filter(p=>p.ok); const inR=okPts.filter(p=>!c0||Math.hypot(p.u-c0.home.u,p.v-c0.home.v)<RR); const legal=(inR.length>=okPts.length*0.6)?okPts:inR; if(legal.length<2){ SND.no(); const m=pts[Math.floor(pts.length/2)]; floatText(m.u,m.v,c0?`out of range for Cutter ${c0.id+1}`:'no cutter','#ffd6c2',11); return; }
+  if(c0&&legal!==okPts){ floatText(legal[legal.length-1].u,legal[legal.length-1].v-10,'clipped to range','#ffd6c2',10); }
+  const closed=forceLoop || (Math.hypot(tr[0].x-tr[tr.length-1].x,tr[0].y-tr[tr.length-1].y)<44 && L>120 && polyArea(tr)>1800);
+  const c=freeCutter(legal[0]); if(!c){ SND.no(); hint(S.budget<=0?'No budget. Nothing sails.':'Every cutter is busy. Tap one to recall it.'); return; }
+  const path=legal.map(p=>({u:p.u,v:p.v}));
+  if(closed&&S.fx.leak){ S.fx.leak=false; let cu=0,cv=0; for(const p of path){ cu+=p.u; cv+=p.v; } cu/=path.length; cv/=path.length; addFear(cu,cv,2.5,NMI200*0.5); floatText(cu,cv,'they knew you were coming','#FF8C42',11); }
+  if(closed){ c.job={kind:'loop',path}; c.seg=0; c.prog=0; c.state='transit'; S.strokes.push({kind:'loop',path,c,alive:true,born:S.t}); const m=path[Math.floor(path.length/2)]; floatText(m.u,m.v,'PATROL','#3DDC97',14); hint('Patrol. The cutter laps the loop and tags what it passes.',3); }
+  const e0=path[path.length-1]; const inb=!closed&&S.reefers.find(r=>!r.gone&&r.call&&(r.call.phase==='in'||r.call.phase==='warn')&&inEEZ(r.u,r.v)&&dist(r,e0)<NMI200*0.25);
+  if(inb){ c.job={kind:'line',path}; c.state='intercept'; c.tgtR=inb; S.strokes.push({kind:'line',path,c,alive:true,born:S.t}); floatText(inb.u,inb.v-30,'INTERCEPT','#FF8C42',14); hint(`Stopping <b>${inb.name}</b> at sea. Relations will take a step.`,3); SND.send(); S.armed=null; return; }
+  else if(!closed){ c.job={kind:'line',path}; c.seg=0; c.state='transit'; S.strokes.push({kind:'line',path,c,alive:true,born:S.t}); const e=path[path.length-1]; floatText(e.u,e.v-14,'BOARD HERE','#fff',13); hint('Run. The cutter boards whatever is inside the circle at the end.',3); }
+  SND.send(); if(c.state!=='port') c.end=c.end; }
+function cutRange(){ const [v0,v1]=visV(); return (v1-v0)*KN.reach; }
+function freeCutter(p){ if(S.budget<=0) return null; const idle=[],busy=[]; for(const c of S.cutters){ if(c.down>S.t||c.state==='boarding'||c.state==='home'||c.state==='escort'||c.state==='intercept'||c.state==='escortR') continue; (c.state==='port'||c.state==='refuel'||c.state==='loiter'?idle:busy).push(c); }
+  // a busy cutter is only taken if the stroke starts on it
+  for(const c of busy){ if(Math.hypot(c.u-p.u,c.v-p.v)<NMI200*0.12) return c; }
+  const pool=idle.length?idle:busy; let best=null,bd=1e9; for(const c of pool){ const d=Math.hypot(c.u-p.u,c.v-p.v); if(d<bd){ bd=d; best=c; } } return best; }
+function eightPath(){ const [v0,v1]=visV(); const mid=(v0+v1)/2, span=(v1-v0)*0.42; const pts=[]; for(let i=0;i<24;i++){ const t=i/24*Math.PI*2; const v=mid+Math.sin(t)*span; const u=uAt(v,1.3)+Math.sin(2*t)*NMI200*0.22; pts.push({u,v}); } return pts; }
+function ladder(j){ const wps=[]; const rows=Math.max(1,Math.round((j.v1-j.v0)/(NMI200*0.5))); for(let i=0;i<rows;i++){ const v=j.v0+(j.v1-j.v0)*(i+0.5)/rows; if(i%2===0){ wps.push({u:j.u0+6,v}); wps.push({u:j.u1-6,v}); } else { wps.push({u:j.u1-6,v}); wps.push({u:j.u0+6,v}); } } return wps; }
+function airSearch(pts,closed,tr){ const A=S.air; if(A.state==='refuel'&&A.fuel<FUEL*0.4){ SND.no(); hint('Aircraft refuelling.',2); return; } if((A.state==='port'||A.state==='refuel')&&S.budget<10){ SND.no(); hint('No budget for a sortie.',2); return; } let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9; for(const p of pts){ u0=Math.min(u0,p.u); u1=Math.max(u1,p.u); v0=Math.min(v0,p.v); v1=Math.max(v1,p.v); } u0-=10;u1+=10;v0-=10;v1+=10; if(A.state==='port'||A.state==='refuel'){ S.budget-=10; }
+  if(closed){ const inBox=S.reefers.filter(r=>!r.gone&&r.known&&(r.fix?r.fix.u:r.u)>u0&&(r.fix?r.fix.u:r.u)<u1&&(r.fix?r.fix.v:r.v)>v0&&(r.fix?r.fix.v:r.v)<v1); if(inBox.length===1&&fixAge(inBox[0])<20){ const Hh=S.heli; if(Hh.state==='refuel'&&Hh.fuel<HFUEL*0.4){ SND.no(); hint('Helicopter refuelling.',2); return; } if((Hh.state==='port'||Hh.state==='refuel')&&S.budget<8){ SND.no(); hint('No budget.',2); return; } if(Hh.state==='port'||Hh.state==='refuel') S.budget-=8; if(A.state==='port'||A.state==='refuel') S.budget+=10; const r=inBox[0]; Hh.job={kind:'track',r,heli:true}; Hh.state='transit'; SND.plane(); rFloat(r.u,r.v-34,'HELICOPTER · FOLLOW','#9fc9ff',13); hint(`Helicopter on <b>${r.name}</b>. Two tagged boats docking under it make one record.`,4); }
+    else if(inBox.length===1){ const r=inBox[0]; A.job={kind:'search',u0,u1,v0,v1,cu:(u0+u1)/2,cv:(v0+v1)/2,loop:true}; A.state='transit'; SND.plane(); floatText((u0+u1)/2,v0-12,'AIR PATROL','#9fc9ff',14); hint(`<b>${r.name}</b> was last seen ${Math.round(fixAge(r))}s ago — too old to follow. Patrolling the area to find it.`,4); }
+    else { A.job={kind:'search',u0,u1,v0,v1,cu:(u0+u1)/2,cv:(v0+v1)/2,loop:true}; A.state='transit'; SND.plane(); floatText((u0+u1)/2,v0-12,'AIR PATROL','#9fc9ff',14); hint(inBox.length?'Air patrol over several ships: each is seen briefly per pass.':'Air patrol. It ladders the area and fixes any ship it finds.',4); } }
+  else { const e=pts[pts.length-1]; const tgt=S.reefers.find(r=>!r.gone&&r.listed&&r.state==='park'&&dist({u:r.fix?r.fix.u:r.u,v:r.fix?r.fix.v:r.v},e)<NMI200*0.3); if(tgt){ if(A.state==='port'||A.state==='refuel') S.budget+=10; letterOfMarque(tgt); return; }
+    A.job={kind:'search',u0,u1,v0,v1,cu:(u0+u1)/2,cv:(v0+v1)/2,loop:false,path:pts.map(p=>({u:p.u,v:p.v}))}; A.state='transit'; SND.plane(); floatText(pts[pts.length-1].u,pts[pts.length-1].v-12,'SWEEP','#9fc9ff',13); hint('One sweep along the line, then home. Cheap eyes.',3); } }
+function airTrack(r){ const A=S.air; if(A.state==='refuel'&&A.fuel<FUEL*0.4){ SND.no(); hint('Aircraft refuelling.',2); return; } if((A.state==='port'||A.state==='refuel')&&S.budget<10){ SND.no(); hint('No budget for a sortie.',2); return; } if(A.state==='port'||A.state==='refuel') S.budget-=10; A.job={kind:'track',r}; A.state='transit'; SND.plane(); rFloat(r.fix?r.fix.u:r.u,(r.fix?r.fix.v:r.v)-34,'TRACK','#9fc9ff',14); hint(`Tracking <b>${r.name}</b>. Two tagged boats docking under the aircraft make one record. Three records list it.`,5); }
+function tapAt(p){ if(!p) return; const [u,v]=S2M(p.x,p.y); { let best=null,bd=30; for(const c of S.cutters){ if(c.state==='port'||c.state==='refuel'||c.state==='home'||c.state==='escort'||c.state==='escortR'||c.state==='boarding') continue; const [x,y]=P(c.u,c.v); const d=Math.hypot(x-p.x,y-p.y); if(d<bd){ bd=d; best=c; } }
+  if(!best) for(const k of S.strokes){ if(!k.alive||k.kind!=='loop') continue; for(const q of k.path){ const [x,y]=P(q.u,q.v); if(Math.hypot(x-p.x,y-p.y)<18){ best=k.c; break; } } if(best) break; }
+  if(best){ best.state='home'; best.job=null; for(const k of S.strokes) if(k.c===best) k.alive=false; S.recalls=(S.recalls||0)+1; floatText(best.u,best.v-16,'RECALLED · heading home','#fff',12); SND.tag(); return; } }
+  // airfield: launch / recall the plane
+  if(T('plane')) { const [ax,ay]=P(S.air.hu,S.air.hv); const [px,py]=P(S.air.u,S.air.v); const A=S.air; if(Math.hypot(ax-p.x,ay-p.y)<40||(A.state!=='port'&&A.state!=='refuel'&&Math.hypot(px-p.x,py-p.y)<26)){ if(A.state==='port'||(A.state==='refuel'&&A.fuel>=FUEL*0.4)){ if(S.fx.storm>S.t){ SND.no(); hint('Storm: aircraft grounded.',2); return; } if(S.budget<10){ SND.no(); hint('No budget for a sortie.',2); return; } S.budget-=10; A.job={kind:'eight'}; A.state='transit'; A.wp=0; SND.plane(); floatText(A.hu,A.hv-24,'PLANE UP · figure-8','#9fc9ff',13); hint('The plane flies a figure-8 along the line. It fixes every ship it passes and sees dockings in its circle.',4); } else if(A.state==='refuel'){ SND.no(); hint('Plane refuelling.',2); } else { A.state='home'; A.job=null; floatText(A.hu,A.hv-18,'RECALL','#9fc9ff',12); hint('Plane recalled.',2); } return; } }
+  // helipad / helicopter in flight: recall
+  if(T('heli')) { const Hh=S.heli; const [x,y]=P(Hh.u,Hh.v); const [hx,hy]=P(Hh.hu,Hh.hv); if(Hh.state!=='port'&&Hh.state!=='refuel'&&(Math.hypot(x-p.x,y-p.y)<24||Math.hypot(hx-p.x,hy-p.y)<22)){ Hh.state='home'; Hh.job=null; floatText(Hh.hu,Hh.hv-16,'RECALL','#9fc9ff',12); hint('Helicopter recalled.',2); return; } if(Math.hypot(hx-p.x,hy-p.y)<22){ hint('Helipad. Tap a recently seen mothership and the helicopter sits on it.',3); return; } }
+  // privateer dock
+  if(T('bounty')) { const [dx,dy]=P(S.priv.hu,S.priv.hv); if(Math.hypot(dx-p.x,dy-p.y)<26){ const b=S.reefers.filter(r=>!r.gone&&r.bounty); hint(b.length?`Bounty posted on ${b.map(r=>r.name).join(', ')}. Privateers sail when the fix is fresh.`:'Privateer dock. List a mothership, then tap its seal to post a bounty. They go out on their own.',4); return; } }
+  // inbound ship inside the line: stop at sea
+  if(T('calls')) { let best=null,bd=34; for(const r of S.reefers){ if(r.gone||!r.call||!(r.call.phase==='in'||r.call.phase==='warn')) continue; const [x,y]=P(r.u,r.v); const d=Math.hypot(x-p.x,y-p.y); if(d<bd){ bd=d; best=r; } } if(best){ confirmStop(best); return; } }
+  // mothership past the line
+  if(T('reefers')) { let best=null,bd=46; for(const r of S.reefers){ if(r.gone||!r.known) continue; const fu=r.fix?r.fix.u:r.u, fv=r.fix?r.fix.v:r.v; const [x,y]=P(fu,fv); const d=Math.hypot(x-p.x,y-p.y); if(d<bd+Math.min(30,fixRadius(r)*K*0.5)){ bd=d; best=r; } }
+    if(best){ const r=best; const fu=r.fix?r.fix.u:r.u, fv=r.fix?r.fix.v:r.v; const [sx,sy]=P(fu,fv);
+      if(r.listed&&!r.bounty&&Math.hypot(sx+30-p.x,sy-30-p.y)<18){ postBounty(r); return; }
+      if(S.heli.job&&S.heli.job.r===r&&S.heli.state!=='home'){ hint(`Helicopter already on <b>${r.name}</b>. ${r.listed&&!r.bounty?'Post a bounty with the button below.':'Evidence aboard: '+Math.floor(r.bubbles)+'. Tap the helicopter to fly it home and file it.'}`,3); return; }
+      if(!T('heli')){ hint(`<b>${r.name}</b> · ${r.flag}. Evidence aboard the plane: ${Math.floor(r.bubbles)}. Tagged boats unloading under the plane add evidence; it is filed when the plane lands.`,3); return; } heliOn(r); return; } }
+  hint(inEEZ(u,v)?`Our water. Fear here ${(fearAt(u,v)*100|0)}%. Draw loops and lines.`:highSeas(u,v)?'Past the line: tap the airfield for the plane, a seen ship for the helicopter, a seal to post a bounty.':'' ,3); }
+function heliOn(r){ const Hh=S.heli; if(S.fx.storm>S.t){ SND.no(); hint('Storm: helicopter grounded.',2); return; } if(Hh.state==='refuel'&&Hh.fuel<HFUEL*0.4){ SND.no(); hint('Helicopter refuelling.',2); return; } if((Hh.state==='port'||Hh.state==='refuel')&&S.budget<8){ SND.no(); hint('No budget.',2); return; } if(Hh.state==='port'||Hh.state==='refuel') S.budget-=8; Hh.job={kind:'track',r,heli:true}; Hh.state='transit'; SND.plane(); rFloat(r.fix?r.fix.u:r.u,(r.fix?r.fix.v:r.v)-34,'HELICOPTER →','#9fc9ff',13); hint(`Helicopter on <b>${r.name}</b>. Tagged dockings in its sight pile up as evidence — tap the ship to bank them.`,5); }
+function fileEvidence(A){ let filed=0; for(const r of S.reefers){ if(r.gone||r.carrier!==A.kind||r.bubbles<1) continue; const per=S.fx.columnists>S.t?4:3; const n=Math.floor(r.bubbles/per); if(n<1){ floatText(A.hu,A.hv-24,`${Math.floor(r.bubbles)}/${per} on ${r.name}: not enough to file`,'#cfd4dc',10); continue; } r.bubbles-=n*per; for(let k=0;k<n&&r.stamps<3;k++){ record(r); filed++; } if(r.bubbles<=0) r.carrier=null; }
+  if(filed){ floatText(A.hu,A.hv-26,`${filed} record${filed>1?'s':''} filed`,'#3DDC97',14); burst(A.hu,A.hv,'#3DDC97',14,70); } }
+function bank(r){ const per=S.fx.columnists>S.t?4:3; const n=Math.floor(r.bubbles/per); if(n<1){ SND.tag(); rFloat(r.u,r.v-30,`${r.bubbles}/2 evidence`,'#3DDC97',11); hint('One more tagged docking makes a record.',2); return; } r.bubbles-=n*per; for(let k=0;k<n&&r.stamps<3;k++) record(r); burst(r.u,r.v,'#3DDC97',14,70); buzz(15); if(!S.firsts.bank){ S.firsts.bank=1; hint('Banked. Evidence left unbanked is lost when the ship goes dark or moves.',4); } }
+function postBounty(r){ if(!T('bounty')){ SND.no(); hint(S.L.bountyLocked?'The US Congress has not authorised Letters of Marque.':'Not available yet.',3); return; } if(S.fx.frozen>S.t){ SND.no(); hint('Bounties frozen for now.',3); return; } if(S.bj>=3){ SND.no(); hint(`Relations at ${S.bj}/4: Beijing is too angry for new bounties. A step cools every 45 s. Stops at sea and bounties each add a step.`,4); return; } r.bounty=true; S.bj=Math.min(4,S.bj+(S.fx.trade>S.t||r.local?2:1)); S.bjT=0; SND.lom(); setTimeout(()=>SND.step(),400); kick(3); rFloat(r.u,r.v-40,'BOUNTY POSTED · Letter of Marque','#FFB400',14); hint(`Bounty on <b>${r.name}</b>. Privateers sail whenever its fix is fresh — keep eyes on it. Relations +1.`,5); paintLom(); }
+function entryPoint(r){ const pu=r.call.port.u, pv=r.call.port.v; if(inEEZ(r.u,r.v)) return {u:r.u,v:r.v}; for(let t=0;t<=1;t+=0.02){ const u=r.u+(pu-r.u)*t, v=r.v+(pv-r.v)*t; if(inEEZ(u,v)){ const t2=Math.min(1,t+0.06); return {u:r.u+(pu-r.u)*t2,v:r.v+(pv-r.v)*t2}; } } return {u:pu,v:pv}; }
+function confirmStop(r){ S.paused=true; show(`<h2>${r.name} inbound</h2><p>${r.flag} · heading for ${r.call.port.name} · ${r.fed} tagged boat${r.fed===1?'':'s'} fed it since the last check.</p><button class="go alt" id="dock">Let it dock<br><small>free · port inspection${r.fed>=2?' finds a record':r.stamps>=1?' — but it may turn back':' finds nothing yet'}</small></button> <button class="go" id="stop">Stop at sea<br><small>a cutter meets it as it crosses the line · records now · Relations +1</small></button>`); $('#dock').onclick=()=>{ S.paused=false; hide(); }; $('#stop').onclick=()=>{ S.paused=false; hide(); const ep=entryPoint(r); const c=freeCutter(ep); if(!c){ SND.no(); hint('No cutter free to stop it.',2); return; } c.job={kind:'line',path:[{u:c.u,v:c.v},{u:r.u,v:r.v}]}; c.state='intercept'; c.tgtR=r; S.strokes.push({kind:'line',path:c.job.path,c,alive:true,born:S.t}); rFloat(r.u,r.v-30,'INTERCEPT','#FF8C42',14); SND.send(); }; }
+// ---------- boarding ----------
+function board(c){ const R=NMI200*0.16; const near=S.boats.filter(b=>!b.gone&&inside(b)&&dist(b,c)<R).sort((a,b)=>dist(a,c)-dist(b,c)).slice(0,S.bj>=2?2:5); const n=near.length; if(n===0) return false;
+  for(const b of near){ b.gone=true; S.seized.push({b,t:S.t+40}); burst(b.u,b.v,'#E2473F',5,40); } S.boarded+=n; c.prizes+=n; S.budget-=6;
+  const i=fidx(c.u,c.v); const rep=i<0?0:S.hits[i]; if(i>=0) S.hits[i]+=1; const scale=KN.bubble*Math.max(0.35,1-rep*0.25);
+  addFear(c.u,c.v,2.2*scale,NMI200*0.55*scale); S.bubbles++; S.profit=clamp(S.profit-6*scale,0,100); S.slow=0.5; kick(5); buzz(40); SND.board(n); setTimeout(()=>SND.bubble(),120); burst(c.u,c.v,'#fff',18,120);
+  floatText(c.u,c.v-18,`${n} boarded`,'#fff',15); if(rep>0) floatText(c.u,c.v+6,'they expected you','#ffd6c2',10);
+  if(!S.firsts.board){ S.firsts.board=1; hint('Boarded. The others scatter — for a while.',4); } return true; }
+// ---------- arrivals, records, seizure ----------
+function arrive(b,r){ r.hold=Math.min(1,r.hold+0.018); if(r.fix) r.fix={u:r.u,v:r.v,t:S.t}; const tracking=(S.air.state==='station'&&dist(S.air,r)<NMI200*0.4)||(S.heli.state==='station'&&dist(S.heli,r)<NMI200*0.4);
+  if(b.tag>0){ r.fed++; S.arrT=(S.arrT||0)+1; if(tracking) S.arrW=(S.arrW||0)+1; if(tracking&&r.dark<=0&&!r.listed&&r.state==='park'){ const carrier=(S.heli.state==='station'&&dist(S.heli,r)<NMI200*0.4)?S.heli:S.air; if(r.bubbles<10){ r.bubbles+=r.escort?0.5:1; r.carrier=carrier.kind; const per=S.fx.columnists>S.t?4:3; rFloat(r.u,r.v-10,'+1 evidence','#FFD25A',11); burst(r.u,r.v,'#FFD25A',10,60); r.evFlash=0.6; SND.tag(); } } else if(tracking&&r.dark>0){ rFloat(r.u,r.v-8,'dark · not proven','#cfd4dc',9.5); } else if(!tracking&&!S.firsts.unseen){ S.firsts.unseen=1; rFloat(r.u,r.v-8,'docked · nobody watching','#cfd4dc',9.5); } b.tag=0; }
+  else if(tracking&&!S.firsts.seen){ S.firsts.seen=1; rFloat(r.u,r.v-8,'seen, not proven','#cfd4dc',9.5); } }
+function record(r){ if(!T('list')&&r.stamps>=2) return; r.stamps++; if(r.stamps===2) S.bans++; r.lastRec=S.t; r.prog=0; S.records++; SND.rec(r.stamps); buzz(12); if(r.stamps===1){ r.escT=S.t+rand(6,12); rFloat(r.u,r.v-30,'★ on notice','#fff',13); if(!S.firsts.rec){ S.firsts.rec=1; hint('A record. The ship knows it is watched now.',4); } }
+  else if(r.stamps===2){ fact('ban','Peru’s 2024 decree made foreign squid ships carry satellite trackers to use its ports. The fleet moved to Chilean ports.'); rFloat(r.u,r.v-30,'★★ banned at our ports','#FFB400',14); r.state='rotate'; r.rot=15; r.fix=null; S.profit=clamp(S.profit-5,0,100); if(!S.firsts.ban){ S.firsts.ban=1; hint('Banned at our ports. It rotates out and a sister ship comes. One more lists it.',5); } }
+  else { r.listed=true; S.listed++; SND.listed(); buzz(25); rFloat(r.u,r.v-30,'★★★ LISTED','#FF4B4B',16); hint('<b>Listed.</b> A Letter of Marque can reach it while its fix is fresh.',5); } paintLom(); }
+function logi(){ const R=S.reefers; if(!R.length) return 1; const a=R.filter(r=>!r.gone).length/R.length; return 0.3+0.7*a*a; }
+function seize(r){ fact('priv','About 55,000 American privateers sailed in the Revolution and 1812. The US has not issued a letter since.'); if(S.L.n>=6) fact('piracy','Most states would call this piracy: on the high seas only the flag state has jurisdiction. The US never signed the 1856 Declaration of Paris that renounced privateering.',true);
+  if(S.L.tools.events){ const roll=Math.random(); const id=roll<0.3?'crew':roll<0.5?'shark':null; if(id) setTimeout(()=>{ if(S&&!S.ended) fireCard(CARDS.find(c=>c.id===id)); },1800); } r.gone=true; r.replaceT=140; S.loms++; r.bounty=false; S.slow=0.6; kick(10); buzz(90); burst(r.u,r.v,'#000',40,160); burst(r.u,r.v,'#FFB400',24,120); let n=0; for(const b of S.boats){ if(b.gone||b.rid!==r.id) continue; n++; b.rid=-1; b.leave=true; b.flee=4; b.run=0; b.tag=0; }
+  S.profitCap=Math.max(20,S.profitCap-20); S.profit=clamp(S.profit-15,0,S.profitCap); SND.lom(); setTimeout(()=>SND.step(),400); rFloat(r.u,r.v-40,'SEIZED','#fff',22); rFloat(r.u,r.v-18,`${n} boats lose their mothership — heading home`,'#FFB400',12); hint(`<b>${r.name}</b> taken under Letter of Marque. Its boats drift off.`,5); for(const A of [S.air,S.heli]) if(A.job&&A.job.r===r){ A.state='home'; A.job=null; } paintLom(); }
+function lomTarget(){ let best=null,ba=1e9; for(const r of S.reefers){ if(r.gone||!r.listed||r.state!=='park') continue; const a=fixAge(r); if(a<ba){ ba=a; best=r; } } return best; }
+function letterOfMarque(rPick){ if(!S||S.ended||S.paused) return; audio(); const r=(rPick&&rPick.reefer!==undefined?null:(rPick&&rPick.u!=null?rPick:null))||S.reefers.filter(r=>!r.gone&&r.listed&&!r.bounty).sort((a,b)=>fixAge(a)-fixAge(b))[0]; if(!r){ SND.no(); hint('No listed ship without a bounty.',2); return; } postBounty(r); }
+function paintLom(){ const el=$('#lom'); if(!S) return; if(S.L.bountyLocked){ el.classList.remove('ready'); el.querySelector('span').textContent='POST BOUNTY'; el.querySelector('small').textContent='locked · US Congress has not acted'; return; } const open=S.reefers.filter(r=>!r.gone&&r.listed&&!r.bounty); const hunting=S.reefers.filter(r=>!r.gone&&r.bounty); const ok=open.length&&S.bj<3&&S.budget>=15; el.classList.toggle('ready',!!ok); el.querySelector('span').textContent=hunting.length?'BOUNTY UP':'POST BOUNTY'; el.querySelector('small').textContent=ok?`on ${open[0].name} · 15`:hunting.length?`privateers hunt ${hunting[0].name}`:S.bj>=3?`Relations ${S.bj}/4 · frozen · cools in ${Math.max(0,Math.ceil(45-S.bjT))}s`:'needs a listed ship'; }
+$('#lom').addEventListener('click',e=>{ e.stopPropagation(); letterOfMarque(); });
+// ---------- side panel (left, over the open sea) ----------
+let sideT=0, shipsOpen=false;
+function paintSide(force){ if(!S) return; sideT+=1; if(!force&&sideT%6) return; const A=S.air,Hh=S.heli;
+  $('#bp-s').textContent=A.state==='port'?'tap: fly figure-8':A.state==='refuel'?'refuelling':A.state==='home'?'returning':'up · tap: recall'; $('#bp-f').style.width=Math.round(clamp(A.fuel/FUEL,0,1)*100)+'%'; $('#b-plane').classList.toggle('on',A.state!=='port'&&A.state!=='refuel');
+  $('#bh-s').textContent=Hh.state==='port'?'tap a ship on the map':Hh.state==='refuel'?'refuelling':Hh.state==='home'?'returning':(Hh.job&&Hh.job.r?Hh.job.r.name+' · tap: recall':'out'); $('#bh-f').style.width=Math.round(clamp(Hh.fuel/HFUEL,0,1)*100)+'%'; $('#b-heli').classList.toggle('on',Hh.state!=='port'&&Hh.state!=='refuel'); }
+$('#b-plane').addEventListener('click',e=>{ e.stopPropagation(); audio(); if(!S||S.ended||S.paused) return; const [x,y]=P(S.air.hu,S.air.hv); tapAt({x,y}); paintSide(true); });
+$('#b-heli').addEventListener('click',e=>{ e.stopPropagation(); audio(); if(!S||S.ended||S.paused) return; const Hh=S.heli; if(Hh.state!=='port'&&Hh.state!=='refuel'){ Hh.state='home'; Hh.job=null; hint('Helicopter recalled.',2); } else hint('Tap a mothership on the map and the helicopter goes to it.',3); paintSide(true); });
+// ---------- event deck ----------
+const CARDS=[
+ {id:'injunction',name:'Injunction',txt:'A judge halts boardings — cutters hold 12 s',cond:()=>S.cutters.some(c=>c.state==='boarding'||c.state==='run'),fx:()=>{S.fx.injunction=S.t+12;}},
+ {id:'release',name:'Prompt release',txt:'Boarded boats must be released on bond: budget +5, they go back to sea',src:'UN Law of the Sea Art. 73 — no jail for fisheries offences',cond:()=>S.seized.length>=2,fx:()=>{ for(const s of S.seized) s.t=S.t; S.budget+=5; }},
+ {id:'columnists',name:'The columnists',txt:'Cases need 3 evidence for 15 s',cond:()=>T('heli')&&S.reefers.some(r=>r.bubbles>=1),fx:()=>{S.fx.columnists=S.t+15;}},
+ {id:'third',name:'Third columnists',txt:'Relations cool slower for 30 s',cond:()=>T('relations')&&S.bj>=1,fx:()=>{S.fx.slowCool=S.t+30;}},
+ {id:'lobby',name:'The lobby',txt:'Fleet profit +10',cond:()=>S.profit<40,fx:()=>{S.profit=clamp(S.profit+10,0,S.profitCap);}},
+ {id:'leak',name:'Leak',txt:'Your next patrol is known in advance',cond:()=>true,fx:()=>{S.fx.leak=true;}},
+ {id:'ram',name:'Ramming',txt:'A cutter is rammed — out 10 s',cond:()=>S.cutters.some(c=>c.state==='intercept'||c.state==='boarding'),fx:()=>{ const c=S.cutters.find(c=>c.state==='intercept'||c.state==='boarding'); if(c){ c.down=S.t+10; burst(c.u,c.v,'#FF8C42',14,80); } }},
+ {id:'sabot',name:'Saboteur',txt:'A cutter is sabotaged in port — out 20 s',cond:()=>S.cutters.some(c=>c.state==='port'),fx:()=>{ const c=S.cutters.find(c=>c.state==='port'); if(c) c.down=S.t+20; }},
+ {id:'dark',name:'Dark switch',txt:'A mothership’s boats go dark 15 s',cond:()=>T('reefers')&&S.reefers.some(r=>!r.gone&&r.known),fx:()=>{ const r=S.reefers.filter(r=>!r.gone&&r.known).sort((a,b)=>b.bubbles-a.bubbles)[0]; if(r){ r.dark=15; if(r.bubbles>0){ r.bubbles=0; S.evLost=true; } } }},
+ {id:'count',name:'The count',txt:'40 more boats arrive — fish drain faster',cond:()=>S.month>=1,fx:()=>{ for(let i=0;i<40;i++) spawn('out'); S.fx.count=S.t+MONTH; }},
+ {id:'nino',name:'El Niño',txt:'Fish −15. The squid move.',cond:()=>true,fx:()=>{ S.stock=clamp(S.stock-15,0,100); S.hots=[]; for(let i=0;i<3;i++) newHot(true); }},
+ {id:'quake',name:'Earthquake, Callao',txt:'Callao cutter out 12 s',cond:()=>S.cutters.some(c=>c.home.name==='Callao'),fx:()=>{ const c=S.cutters.find(c=>c.home.name==='Callao'); if(c) c.down=S.t+12; }},
+ {id:'storm',name:'Storm',txt:'Aircraft grounded, no shuttles for 12 s',cond:()=>T('plane')&&(S.air.state!=='port'||S.heli.state!=='port'),fx:()=>{ S.fx.storm=S.t+12; for(const A of [S.air,S.heli]) if(A.state!=='port'&&A.state!=='refuel'){ A.state='home'; A.job=null; } }},
+ {id:'subsidy',name:'Subsidy top-up',txt:'Fleet profit +25',cond:()=>S.profit<30,fx:()=>{S.profit=clamp(S.profit+25,0,S.profitCap);}},
+ {id:'scarb',name:'Scarborough flares',txt:'Beijing is busy — Relations cool faster',cond:()=>T('relations')&&S.bj>=1,fx:()=>{S.fx.fastCool=S.t+30;}},
+ {id:'trade',name:'Trade deal in play',txt:'Bounties cost 2 steps for 30 s',cond:()=>T('bounty')&&S.reefers.some(r=>r.listed&&!r.gone),fx:()=>{S.fx.trade=S.t+30;}},
+ {id:'mora',name:'Moratorium',txt:'Beijing announces a squid moratorium. Nothing changes.',cond:()=>T('relations')&&S.month>=2,fx:()=>{ S.bj=Math.max(0,S.bj-1); }},
+ {id:'chancay',name:'Chancay',txt:'Banned ships offload at Chancay — back sooner',cond:()=>T('reefers')&&S.reefers.some(r=>r.state==='rotate'),fx:()=>{ for(const r of S.reefers) if(r.state==='rotate') r.rot*=0.5; }},
+ {id:'chile',name:'Chilean ports',txt:'Port calls go south this month',cond:()=>T('calls')&&S.bans>=2,fx:()=>{ S.fx.noCalls=S.t+MONTH; }},
+ {id:'crew',name:'The crew',txt:'The seized crew are trafficked Indonesian workers. Repatriation −10 budget; Relations cool a step.',src:'US sanctions on Pingtan Marine (2022) rested on forced labour',cond:()=>false,fx:()=>{ S.budget-=10; if(T('relations')) S.bj=Math.max(0,S.bj-1); }},
+ {id:'shark',name:'Shark haul',txt:'The seized mothership was carrying protected sharks. World opinion swings: Relations cool a step, fish +5.',src:'Fu Yuan Yu Leng 999, Galápagos 2017: ~6,600 sharks',cond:()=>false,fx:()=>{ if(T('relations')) S.bj=Math.max(0,S.bj-1); S.stock=Math.min(100,S.stock+5); }},
+ {id:'wto',name:'WTO subsidy ruling',txt:'Fuel subsidies to the fleet are ruled illegal. Their profit slowly falls for the rest of the season.',src:'WTO fisheries subsidies agreement, in force Sept 2025',cond:()=>S.L.n>=6&&!S.fx.wto,fx:()=>{ S.fx.wto=1; }},
+ {id:'japan',name:'Japan funds patrols',txt:'A Japanese-funded cutter joins for 40 s.',src:'Japan’s $1.9M surveillance aid to Peru and neighbours, Jan 2026',cond:()=>S.L.n>=4&&!S.cutters.some(c=>c.loan),fx:()=>{ const h=S.cutters[0].home; S.cutters.push({id:S.cutters.length,u:h.u,v:h.v,a:Math.PI,home:h,state:'port',end:KN.endurance,job:null,seg:0,prog:0,loiter:0,prizes:0,loan:S.t+40}); }},
+ {id:'localflag',name:'Local flag, foreign owner',txt:'A listed ship flies Argentina’s flag. A bounty on it costs 2 Relations.',src:'Chinese firms own ~63% of Argentina’s own squid jiggers (2026 report)',cond:()=>S.L.n>=6&&S.reefers.some(r=>!r.gone&&r.listed&&!r.bounty&&!r.local),fx:()=>{ const r=S.reefers.find(r=>!r.gone&&r.listed&&!r.bounty&&!r.local); r.local=1; r.flag='Argentina'; rFloat(r.u,r.v-40,'flag: Argentina','#FFB400',12); }},
+ {id:'wrong',name:'Wrong target',txt:'The US Congress passes a Letter of Marque bill — for drug cartels. Bounties frozen 20 s.',src:'S. 3567, Dec 2025, targets cartels; no bill targets fishing fleets',cond:()=>T('bounty')&&S.L.n>=5,fx:()=>{ S.fx.frozen=S.t+20; }},
+ {id:'sat',name:'Satellite outage',txt:'Next satellite pass skipped',cond:()=>S.passT<10,fx:()=>{ S.fx.skipPass=true; }}
+];
+// Keep the toast/WHY card off the bases (ports, airfield, helipad, privateer dock). Try top-centre, then bottom-centre, then a
+// narrow card at top-left over the open sea; take the first that covers none, else the one covering fewest. Returns its class.
+function placeEvt(el){ const t0=topPad+8; el.className=''; el.style.top=t0+'px'; if(!S||S.L.scale) return ''; const pts=S.cutters.map(c=>P(c.home.u,c.home.v));
+  if(T('plane')) pts.push(P(S.air.hu,S.air.hv)); if(T('heli')) pts.push(P(S.heli.hu,S.heli.hv)); if(T('bounty')){ const [x,y]=P(S.priv.hu,S.priv.hv); pts.push([x,y],[x-68,y+21],[x-108,y+21]); } // dock icon and its 'Privateers' label pill
+  let best=null; for(const [cls,bottom] of [['',false],['',true],['side',false]]){ el.className=cls; const top=bottom?H-botPad-8-el.offsetHeight:t0; el.style.top=top+'px';
+    const r=el.getBoundingClientRect(), n=pts.filter(([x,y])=>x>r.left-18&&x<r.right+18&&y>r.top-18&&y<r.bottom+18).length; if(!best||n<best.n) best={cls,top,n}; if(!n) break; }
+  el.className=best.cls; el.style.top=best.top+'px'; return best.cls; }
+function toast(t,warn,ms){ const el=$('#evt'); el.style.translate=''; el.style.opacity=''; el.style.transition=''; el.innerHTML=t+'<i class="x" aria-hidden="true">×</i>'; el.title='Swipe or tap to dismiss'; const side=placeEvt(el); el.className=(side?side+' ':'')+(warn?'show warn':'show'); clearTimeout(el._t); el._t=setTimeout(()=>{ el.className=side; },ms||3200); }
+// Cards can be dismissed at the player's discretion: drag one away in any direction (it follows the finger, then flies off),
+// flick it, or tap it. A short, slow drag snaps back. While shown the card takes touches; strokes already started on the map
+// keep the pointer (setPointerCapture in the canvas handler).
+(()=>{ const el=$('#evt'); let sx=0,sy=0,dx=0,dy=0,t0=0,drag=false;
+  const settle=ms=>setTimeout(()=>{ el.style.transition=''; if(!el.classList.contains('show')) el.style.translate=''; },ms);
+  const dismiss=(vx,vy)=>{ clearTimeout(el._t); el.style.transition='translate .2s ease-out, opacity .2s'; el.style.opacity=''; el.style.translate=`${vx}px ${vy}px`; el.classList.remove('show'); settle(240); };
+  el.addEventListener('pointerdown',e=>{ if(!el.classList.contains('show')) return; e.preventDefault(); e.stopPropagation(); drag=true; sx=e.clientX; sy=e.clientY; dx=dy=0; t0=performance.now(); el.style.transition='none'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
+  el.addEventListener('pointermove',e=>{ if(!drag) return; dx=e.clientX-sx; dy=e.clientY-sy; el.style.translate=`${dx}px ${dy}px`; el.style.opacity=String(Math.max(0.2,1-Math.hypot(dx,dy)/200)); });
+  const end=()=>{ if(!drag) return; drag=false; const d=Math.hypot(dx,dy), quick=performance.now()-t0<250;
+    if(d>50||(quick&&d>20)){ const k=360/d; dismiss(dx*k,dy*k); } else if(d<8) dismiss(0,-10);
+    else { el.style.transition='translate .18s ease-out, opacity .18s'; el.style.opacity=''; el.style.translate=''; settle(200); } };
+  el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end); })();
+function fireCard(c){ if(!c) return; S.evN++; c.fx(); note('cards',c.id); rec('card',{id:c.id}); toast(`<b>${c.name}</b> · ${c.txt}${c.src?`<br><span style="font-size:11px;opacity:.75">Real: ${c.src}</span>`:''}`,false,c.src?5500:3200); S.factT=Math.max(S.factT||0,6); SND.step(); }
+function updateEvents(dt){ if(!S.L.tools.events) return; if(S.evQ){ S.evQ.t-=dt; if(S.evQ.t<=0){ fireCard(S.evQ.c); S.evQ=null; } return; }
+  S.evT-=dt*(S.L.evRate||1); if(S.evT>0) return; if(S.cutters.some(c=>c.state==='boarding')){ S.evT=2; return; }
+  const ok=CARDS.filter(c=>c.cond()&&!(S.recent||[]).includes(c.id)); if(!ok.length){ S.evT=5; return; } const c=ok[Math.floor(Math.random()*ok.length)]; S.recent=[...(S.recent||[]).slice(-4),c.id];
+  S.evQ={c,t:4}; toast(`⚠ <b>${c.name}</b> in 4 s`,true); S.evT=rand(30,45); }
+// ---------- tool buttons per level ----------
+function paintTools(){ if(!S) return; if(!$('#evt').classList.contains('show')) $('#evt').style.top=(topPad+8)+'px'; $('#b-plane').style.display=T('plane')?'':'none'; $('#b-heli').style.display=T('heli')?'':'none'; $('#lom').style.display=(T('bounty')||S.L.bountyLocked)?'':'none'; $('#bj').style.visibility=T('relations')?'visible':'hidden'; }
+// ---------- update ----------
+function update(dt){ S.t+=dt; if(!S.L.only) S.left-=dt; updateMissions(dt); if(S.ended) return; if(S.msg){ S.msg.left-=dt; if(S.msg.left<=0) S.msg=null; }
+  // months
+  const m=Math.floor(S.t/MONTH); if(m>S.month&&(m<4||S.L.endless)){ S.month=m; const add=Math.round(KN.budget*S.L.budget*(S.L.budgetCut?Math.max(0.3,1-0.25*m):1)); S.budget+=add; S.broke=false; if(!S.L.scale){ SND.month(); floatText(S.cutters[0].home.u-40,S.cutters[0].home.v,`month ${m+1}: +${add}${S.L.budgetCut?' (cut)':''}`,S.L.budgetCut?'#FFB400':'#3DDC97',13); } }
+  // fear decay
+  const fd=Math.exp(-KN.fearDecay*dt); for(let i=0;i<S.fear.length;i++){ S.fear[i]*=fd; }
+  S.histT+=dt; if(S.histT>1){ S.histT=0; S.hist.push(S.stock); for(let i=0;i<S.hits.length;i++) S.hits[i]*=0.96; }
+  const [v0,v1]=visV(); const um=playU0();
+  // cutters
+  let atSea=0;
+  for(const c of S.cutters){ const sp=52*KN.cutSpeed;
+    if(S.L.scale){ if(c.lineAt&&S.t>1){ if(moveTo(c,c.lineAt[0],c.lineAt[1],sp*0.6,dt)) c.a=Math.PI; } continue; }
+    if(c.state==='port'){ c.end=Math.min(KN.endurance,c.end+dt*KN.endurance/10); continue; }
+    if(c.state==='refuel'){ c.end+=dt*KN.endurance/10; if(c.end>=KN.endurance){ c.end=KN.endurance; c.state='port'; } continue; }
+    atSea++; c.end-=dt; S.budget-=dt*0.22;
+    if(c.state!=='escort'&&c.state!=='home'&&c.end<=0){ c.state='home'; c.job=null; for(const s of S.strokes) if(s.c===c) s.alive=false; floatText(c.u,c.v-14,'out of endurance','#cfd4dc',10); }
+    if(c.state==='home'||c.state==='escort'){ for(const s of S.strokes) if(s.c===c&&c.state==='home') s.alive=false; if(moveTo(c,c.home.u,c.home.v,sp*1.1,dt)){ c.state='refuel'; c.prizes=0; } continue; }
+    // presence adds fear and tags
+    addFear(c.u,c.v,0.9*dt,NMI200*0.2);
+    for(const b of S.boats){ if(b.gone||b.tag>0) continue; if(dist(b,c)<NMI200*0.09&&inside(b)){ b.tag=40; S.tags++; b.flee=1.5; b.run=1; if(S.tags===1) floatText(b.u,b.v-6,'tagged','#3DDC97',9); if(S.tags%6===1) SND.tag(); } }
+    if(c.state==='intercept'){ addFear(c.u,c.v,0.5*dt,NMI200*0.15); continue; }
+    if(c.state==='escortR'){ const r=c.tgtR; if(!r||r.gone||!r.call||r.call.phase!=='escorted'){ c.state='home'; c.tgtR=null; continue; } moveTo(c,r.u+10,r.v+8,60,dt); continue; }
+    if(S.fx.injunction>S.t||c.down>S.t) continue;
+    const path=c.job.path;
+    if(c.state==='transit'){ if(moveTo(c,path[0].u,path[0].v,sp*1.6,dt)){ c.state=c.job.kind==='loop'?'patrol':'run'; c.seg=0; } }
+    else if(c.state==='patrol'){ const n=path.length; const tgt=path[(c.seg+1)%n]; if(moveTo(c,tgt.u,tgt.v,sp,dt)) c.seg=(c.seg+1)%n; }
+    else if(c.state==='run'){ if(c.seg>=path.length-1){ const R=NMI200*0.16; const n=S.boats.filter(b=>!b.gone&&inside(b)&&dist(b,c)<R).length; if(n>0){ c.state='boarding'; c.bt=0; } else { c.state='home'; c.job=null; floatText(c.u,c.v-14,'empty water · returning','#cfd4dc',10); const near=S.boats.filter(b=>!b.gone&&!inside(b)&&dist(b,c)<NMI200*0.3).length; if(near>0) fact('escape','They crossed the line. Your authority stops at 200 miles; there is no hot pursuit onto the high seas here.',true); } }
+      else { const tgt=path[c.seg+1]; if(moveTo(c,tgt.u,tgt.v,sp*1.1,dt)) c.seg++; } }
+    else if(c.state==='boarding'){ c.bt+=dt; if(c.bt>=1.0){ if(board(c)){ c.state='escort'; for(const s of S.strokes) if(s.c===c) s.alive=false; } else { c.state='home'; c.job=null; floatText(c.u,c.v-14,'they slipped away · returning','#cfd4dc',10); const near=S.boats.filter(b=>!b.gone&&!inside(b)&&dist(b,c)<NMI200*0.3).length; if(near>0) fact('escape','They crossed the line. Your authority stops at 200 miles; there is no hot pursuit onto the high seas here.',true); } } }
+    else if(c.state==='loiter'){ c.loiter+=dt; c.lw=(c.lw||0)+dt; c.a+=dt*0.5; if(c.lw>4){ c.lw=0; c.state='home'; c.job=null; floatText(c.u,c.v-14,'nothing to board · returning','#cfd4dc',10); continue; } if(c.loiter>1.2){ c.loiter=0; const R=NMI200*0.16; if(S.boats.some(b=>!b.gone&&inside(b)&&dist(b,c)<R)){ c.state='boarding'; c.bt=0; } } if(!S.firsts.loiter&&c.loiter>0.5){ S.firsts.loiter=1; hint('Empty water. The cutter waits for boats to drift back.',3); } }
+  }
+  if(S.budget<=0&&!S.broke){ S.broke=true; S.budget=0; for(const c of S.cutters){ if(c.state!=='port'&&c.state!=='refuel'&&c.state!=='escort'){ c.state='home'; c.job=null; } } for(const s of S.strokes) s.alive=false; hint('<b>Budget gone.</b> Everything sails home until next month.',5); SND.no(); }
+  S.strokes=S.strokes.filter(s=>s.alive); if((S.t*10|0)%50===0) S.boats=S.boats.filter(b=>!b.dead);
+  // squid hotspot drifts along the coast; boats re-pick grounds toward it
+  for(let i=S.hots.length-1;i>=0;i--){ const h=S.hots[i]; if(h.warm>0){ h.warm-=dt; continue; } h.age+=dt; h.v+=h.dv*dt; h.u=uAt(h.v,h.side==='in'?0.65:1.25); if(h.v<v0+50||h.v>v1-50) h.dv*=-1; if(h.age>h.life){ S.hots.splice(i,1); } }
+  if(S.hots.length<3||(S.hots.length<4&&Math.random()<dt*0.05)) newHot(false);
+  // satellite pass
+  S.passT-=dt; if(S.passT<=0&&S.fx.skipPass){ S.passT=PASS_EVERY; S.fx.skipPass=false; toast('Satellite pass skipped'); } if(S.passT<=0){ S.passT=PASS_EVERY; S.flash=2.5; SND.pass(); for(const r of S.reefers) if(!r.gone) seeReefer(r); if(!S.firsts.pass){ S.firsts.pass=1; hint(T('reefers')?'Satellite pass. Every ship fixed for a moment. Fixes age.':'Satellite pass: for a moment you see the whole fleet.',4); } } if(S.flash>0) S.flash-=dt;
+  // reefers
+  for(const r of S.reefers){ if(r.gone){ r.replaceT-=dt; if(r.replaceT<=0){ r.gone=false; r.stamps=0; r.listed=false; r.known=false; r.fix=null; r.hold=0.1; r.bubbles=0; r.bounty=false; r.u=r.hu-90; r.v=r.hv; r.tu=r.hu; r.tv=r.hv; r.wT=rand(6,10); r.state='park'; r.name=r.name+'̓'.replace('̓',''); for(const b of S.boats) if(b.rid===-1) assignReefer(b); rFloat(r.u,r.v-20,'replacement on station','#cfd4dc',10); } continue; }
+    if(r.cool>0) r.cool-=dt; if(r.dark>0) r.dark-=dt;
+    if(r.stamps===1&&S.t-r.lastRec>REC_STALE&&![S.air,S.heli].some(A=>A.job&&A.job.r===r&&A.state==='station')){ r.stamps--; r.lastRec=S.t; rFloat(r.u,r.v-26,'record expired','#cfd4dc',10); }
+    if(r.state==='rotate'){ r.rot-=dt; if(r.rotV==null){ r.rotV=r.v; r.rotU=clearOfPanel(uAt(r.v,1.25),r.v); } if(r.rot>7.5) moveTo(r,r.rotU-90,r.rotV,22,dt); else moveTo(r,r.rotU,r.rotV,22,dt); turn(r,dt*4); if(r.rot<=0){ r.state='park'; r.rotV=null; r.tu=r.rotU; r.tv=r.v; r.wT=rand(4,8); rFloat(r.u,r.v-24,'sister ship on station','#cfd4dc',10); fact('sister','Banned, and its sister took its place. The owners run dozens of hulls.',true); } continue; }
+    if(r.hold>=1){ r.state='rotate'; r.rot=15; r.hold=0; r.bubbles=0; rFloat(r.u,r.v-24,'hold full · leaving','#FF8C42',11); continue; }
+    if(T('dodges')&&r.stamps>=1&&!r.listed&&!r.warn&&S.t>r.escT){ r.warn={k:Math.random()<0.5?'dark':'shift',left:4}; if(r.known) rFloat(r.fix?r.fix.u:r.u,(r.fix?r.fix.v:r.v)-26,r.warn.k==='dark'?'going dark…':'shifting…','#FF8C42',11); }
+    if(r.warn){ r.warn.left-=dt; if(r.warn.left<=0){ if(r.bubbles>0){ rFloat(r.u,r.v-16,`${Math.floor(r.bubbles)} evidence lost`,'#FF8C42',10); r.bubbles=0; S.evLost=true; } if(r.warn.k==='dark'){ r.dark=8; fact('dark','Real vessels switch off their AIS transponders to vanish from tracking.'); } else { fact('swap','Ships re-flag and hide owners in layers. Pingtan Marine, which runs ~100 vessels, is registered in the Cayman Islands.'); r.hv=clamp(r.hv+rand(-1,1)*NMI200*0.35,v0+30,v1-30); r.wT=0; } r.warn=null; r.escT=S.t+rand(12,20); } }
+    if(!r.call){ r.wT=(r.wT||0)-dt; } if(!r.call&&r.wT<=0){ r.wT=rand(5,11); const h=nearestHot(r.hv); const base=h?h.v*0.6+r.hv*0.4:r.hv; r.tv=clamp(base+rand(-1,1)*NMI200*0.25,v0+30,v1-30); r.tu=clearOfPanel(uAt(r.tv,rand(1.15,1.38)),r.tv); } if(r.tu!=null&&!r.call){ const mv=Math.hypot(r.tu-r.u,r.tv-r.v); moveTo(r,r.tu,r.tv,16,dt); if(mv>2) r.a=Math.atan2(r.tv-r.v,r.tu-r.u); }
+    turn(r,dt*4); r.escort=S.bj>=1; }
+  // port calls
+  for(const r of S.reefers){ if(r.gone||r.listed||r.stamps>=2||r.state==='rotate') { r.call=null; continue; }
+    if(!r.call){ if(!T('calls')||S.fx.noCalls>S.t) continue; r.callT-=dt; if(r.callT<=0&&S.bj<2&&!S.reefers.some(o=>o.call)&&S.t-(S.lastCall||-99)>18){ S.lastCall=S.t; const ports=S.cutters.map(c=>c.home); const port=ports[Math.floor(Math.random()*ports.length)]; r.call={port,phase:'warn',t:6,ru:r.u,rv:r.v}; rFloat(r.u,r.v-28,`${r.name} inbound · ${port.name}`,'#FFB400',11); hint(`<b>${r.name}</b> is coming in to ${port.name}. Let it dock (free) or stop it at sea (Relations +1).`,5); if(!r.known) seeReefer(r); } continue; }
+    const c=r.call;
+    if(c.phase==='warn'){ c.t-=dt; if(c.t<=0) c.phase='in'; }
+    else if(c.phase==='in'){ seeReefer(r); if(moveTo(r,c.port.u-16,c.port.v,38,dt)){ c.phase='quay'; c.t=10; }
+      // on-notice ships abort if a cutter is near the approach
+      if(r.stamps>=1&&inEEZ(r.u,r.v)&&!S.cutters.some(cu=>cu.state==='intercept'&&cu.tgtR===r)){ for(const cu of S.cutters){ if(cu.state!=='port'&&cu.state!=='refuel'&&dist(cu,r)<NMI200*0.3&&cu.state!=='intercept'){ c.phase='abort'; rFloat(r.u,r.v-24,'turning back','#FF8C42',11); break; } } } }
+    else if(c.phase==='escorted'){ if(moveTo(r,c.port.u-16,c.port.v,32,dt)){ c.phase='held'; c.t=15; rFloat(r.u,r.v-30,'DETAINED','#FF8C42',13); } }
+    else if(c.phase==='held'){ c.t-=dt; if(c.t<=0){ c.phase='out'; rFloat(r.u,r.v-30,'released · bond posted','#cfd4dc',11); } }
+    else if(c.phase==='quay'){ c.t-=dt; if(c.t<=0){ if(r.fed>=2){ r.fed=0; record(r); rFloat(r.u,r.v-36,'INSPECTED · record','#fff',12); } else { rFloat(r.u,r.v-36,'INSPECTED · nothing on paper','#cfd4dc',11); } c.phase='out'; } }
+    else if(c.phase==='abort'||c.phase==='out'){ if(moveTo(r,c.ru,c.rv,c.phase==='abort'?60:38,dt)){ r.call=null; r.callT=rand(35,70); r.wT=0; } }
+    if(c.phase==='quay'||c.phase==='held'||c.phase==='warn') r.a=Math.PI*0.95; }
+  // interceptions
+  for(const cu of S.cutters){ if(cu.state!=='intercept') continue; const r=cu.tgtR; if(!r||r.gone||!r.call||((r.call.phase==='abort'||r.call.phase==='out')&&!inEEZ(r.u,r.v))){ cu.state='home'; cu.job=null; cu.tgtR=null; if(r&&!r.gone) floatText(cu.u,cu.v-14,'it got back over the line','#ffd6c2',10); continue; }
+    if(!inEEZ(r.u,r.v)){ const ep=entryPoint(r); moveTo(cu,ep.u,ep.v,52*KN.cutSpeed*1.4,dt); continue; }
+    if(moveTo(cu,r.u+6,r.v,52*KN.cutSpeed*1.4,dt)){ // stopped at sea
+      const n=Math.max(1,Math.min(2,Math.floor(r.fed/2))); r.fed=0; for(let k=0;k<n&&r.stamps<3;k++) record(r); S.stops++; if(T('relations')){ S.bj=Math.min(4,S.bj+1); S.bjT=0; } SND.step(); kick(4); buzz(40); burst(r.u,r.v,'#fff',20,100); rFloat(r.u,r.v-40,T('relations')?'STOPPED AT SEA · Relations +1':'STOPPED AT SEA','#FF8C42',13); r.call.phase='escorted'; r.call.port=cu.home; cu.state='escortR'; cu.tgtR=r; cu.job=null; } }
+  // aircraft & helicopter
+  for(const A of [S.air,S.heli]){ const sp=A.kind==='heli'?200:260; const FMAX=A.kind==='heli'?HFUEL:FUEL; if(A.state==='refuel'){ A.fuel=Math.min(FMAX,A.fuel+dt*REFUEL_RATE); if(A.fuel>=FMAX) A.state='port'; }
+    else if(A.state==='home'){ A.fuel-=dt; if(moveTo(A,A.hu,A.hv,sp,dt)){ A.state='refuel'; A.job=null; fileEvidence(A); } }
+    else if(A.state==='transit'){ const j=A.job; let tu,tv; if(j.kind==='eight'){ j.wps=j.wps||eightPath(); tu=j.wps[0].u; tv=j.wps[0].v; } else if(j.kind==='search'){ j.wps=j.wps||ladder(j); const f=j.loop?j.wps[0]:j.path[0]; tu=f.u; tv=f.v; } else { tu=j.r.u+22; tv=j.r.v; } A.fuel-=dt; if(moveTo(A,tu,tv,sp,dt)){ A.state='station'; A.ph=Math.atan2(A.v-(j.kind==='track'?j.r.v:0),A.u-(j.kind==='track'?j.r.u:0)); A.wp=0; } }
+    else if(A.state==='station'){ A.fuel-=dt; const reserve=Math.hypot(A.u-A.hu,A.v-A.hv)/sp+3; const j=A.job; if(j.kind==='track'&&j.r.gone){ A.state='home'; hint('Target gone. Aircraft home.',2); }
+      else if(j.kind==='eight'){ const w=j.wps[A.wp%j.wps.length]; if(moveTo(A,w.u,w.v,sp*0.55,dt)) A.wp++; for(const r of S.reefers) if(!r.gone&&dist(A,r)<NMI200*0.4) seeReefer(r); }
+      else if(j.kind==='search'){ if(j.loop){ const w=j.wps[A.wp%j.wps.length]; if(moveTo(A,w.u,w.v,sp*0.42,dt)) A.wp++; } else { const w=j.path[Math.min(A.wp,j.path.length-1)]; if(moveTo(A,w.u,w.v,sp*0.55,dt)){ A.wp++; if(A.wp>=j.path.length){ A.state='home'; } } } for(const r of S.reefers) if(!r.gone&&r.u>j.u0&&r.u<j.u1&&r.v>j.v0&&r.v<j.v1){ if(!r.known) rFloat(r.u,r.v-20,'found: '+r.name,'#fff',11); seeReefer(r); } }
+      else { const r=j.r; A.ph+=dt*1.1; const ou=r.u+Math.cos(A.ph)*22, ov=r.v+Math.sin(A.ph)*22; moveTo(A,ou,ov,sp*0.6,dt); if(r.dark<=0) seeReefer(r); else r.known=true; }
+      if(A.fuel<=reserve){ A.state='home'; floatText(A.u,A.v-16,'bingo fuel','#cfd4dc',10); } } }
+  // privateers go out on their own when a bounty's fix is fresh
+  { const Pv=S.priv; if(Pv.state==='port'&&T('bounty')&&!(S.fx.frozen>S.t)){ const tgt=S.reefers.filter(r=>!r.gone&&r.bounty&&r.state==='park'&&fixFresh(r)).sort((a,b)=>fixAge(a)-fixAge(b))[0]; if(tgt){ Pv.state='out'; Pv.tgt=tgt; SND.send(); floatText(Pv.hu,Pv.hv-20,'privateers away','#FFB400',12); hint(`Privateers sailing for <b>${tgt.name}</b>. Keep its fix fresh.`,3); } }
+    if(Pv.state==='out'){ const r=Pv.tgt; if(!r||r.gone||!r.bounty){ Pv.state='home'; } else if(moveTo(Pv,r.u+10,r.v,120,dt)){ if(fixFresh(r)||(S.heli.state==='station'&&S.heli.job&&S.heli.job.r===r)){ seize(r); Pv.state='home'; } else { Pv.state='search'; Pv.search=0; Pv.sc={u:Pv.u,v:Pv.v}; hint('Fix is stale. The privateer searches.',3); } } }
+    else if(Pv.state==='search'){ const r=Pv.tgt; Pv.search+=dt; if(!r||r.gone||!r.bounty){ Pv.state='home'; } else if(fixFresh(r)){ if(moveTo(Pv,r.u+10,r.v,120,dt)){ seize(r); Pv.state='home'; } } else { const sc=Pv.sc||Pv, R=10+Pv.search*5, an=Pv.search*1.6; moveTo(Pv,sc.u+Math.cos(an)*R,sc.v+Math.sin(an)*R,70,dt); if(Pv.search>6){ Pv.state='home'; hint('Privateers lost it. They will try again on a fresh fix.',3); } } }
+    else if(Pv.state==='home'){ if(moveTo(Pv,Pv.hu,Pv.hv,120,dt)){ Pv.state='port'; Pv.a=Math.PI; Pv.da=null; } } if(Pv.state!=='port') turn(Pv,dt*6); }
+  // Beijing decay
+  S.bjT+=dt*(S.fx.fastCool>S.t?2:S.fx.slowCool>S.t?0.4:1); if(S.bj>0&&S.bjT>45){ S.bjT=0; S.bj--; hint('Relations cool a step.',2); }
+  if(S.bj>=4) end('crisis');
+  // waves
+  S.waveT-=dt; if(!S.wave&&S.waveT<=0){ let best=null,bf=1e9; for(const h of liveHots().filter(h=>h.side==='in')){ const f=fearAt(h.u,h.v); if(f<bf){ bf=f; best=h.v; } } if(best==null) best=(v0+v1)/2; S.wave={v:best,left:5,n:Math.round((S.bigWave||1)*logi()*(S.L.waveMul||1)*(4+S.profit/15+S.waveN*0.6))}; S.bigWave=1; S.waveN++; SND.wave(); if(!S.firsts.wave){ S.firsts.wave=1; hint('A wave is coming where you have been least.',4); } }
+  if(S.wave){ S.wave.left-=dt; if(S.wave.left<=0){ for(let i=0;i<S.wave.n;i++){ const b=spawn('out',S.wave.v); b.gu=uAt(b.v,rand(0.45,0.85)); b.gv=b.v; } kick(2); S.wave=null; S.waveT=15-Math.min(6,S.waveN*0.7); } }
+  // seized return
+  for(let i=S.seized.length-1;i>=0;i--){ const s=S.seized[i]; if(S.t>=s.t){ s.b.gone=false; s.b.u=uAt(s.b.v,1.1); s.b.gu=uAt(s.b.v,0.8); s.b.tag=0; S.seized.splice(i,1); if(!S.firsts.bond){ S.firsts.bond=1; floatText(s.b.u,s.b.v-10,'back · bond posted','#cfd4dc',10); hint('Seized boats post bond and come back.',3); } } }
+  // inward flow: a few boats per second pick low-fear grounds inside
+  S.flowT=(S.flowT||0)+dt*KN.inflow*(S.L.inflow||1)*logi(); while(S.flowT>4){ S.flowT-=4; const hs=liveHots().filter(h=>h.side==='in'); if(hs.length){ const h=hs.slice().sort((a,b)=>fearAt(a.u,a.v)-fearAt(b.u,b.v))[0]; if(fearAt(h.u,h.v)<0.6){ const outs=S.boats.filter(b=>!b.gone&&!inside(b)&&b.flee<=0&&b.run===0).sort((a,b)=>Math.abs(a.v-h.v)-Math.abs(b.v-h.v)).slice(0,6+Math.floor(Math.random()*7)); for(const b of outs){ const ang=rand(0,6.28), rr=Math.sqrt(Math.random())*h.r; b.gv=clamp(h.v+Math.sin(ang)*rr,v0,v1); b.gu=h.u+Math.cos(ang)*rr; } if(outs.length>=6&&!S.firsts.cross){ S.firsts.cross=1; hint('A group is crossing the line toward the squid.',3); } } } }
+  // boats: flocking + fear
+  const grid=new Map(); const gk=(u,v)=>((u/22)|0)+','+((v/22)|0);
+  for(const b of S.boats){ if(b.gone) continue; const k=gk(b.u,b.v); (grid.get(k)||grid.set(k,[]).get(k)).push(b); }
+  let insideN=0;
+  for(const b of S.boats){ if(b.gone) continue; b.ph+=dt; if(b.tag>0) b.tag-=dt; if(b.flee>0) b.flee-=dt;
+    if(b.leave){ b.u-=70*dt; b.v+=Math.sin(b.ph)*10*dt; b.a=Math.PI; if(b.u<um-30){ b.gone=true; b.dead=true; } continue; }
+    let ax=0,ay=0; // cohesion/separation
+    let cx=0,cy=0,cn=0; const gx=(b.u/22)|0, gy=(b.v/22)|0; for(let yy=gy-1;yy<=gy+1;yy++) for(let xx=gx-1;xx<=gx+1;xx++){ const cell=grid.get(xx+','+yy); if(!cell) continue; for(const o of cell){ if(o===b) continue; const du=o.u-b.u,dv=o.v-b.v; const d=Math.hypot(du,dv); if(d<1e-3) continue; if(d<7){ ax-=du/d*(7-d)*3; ay-=dv/d*(7-d)*3; } else if(d<22){ cx+=o.u; cy+=o.v; cn++; } } }
+    if(cn){ ax+=(cx/cn-b.u)*0.35; ay+=(cy/cn-b.v)*0.35; }
+    // shuttle: run home when tagged, or on a timer
+    const r=reeferOf(b); b.shuttleT-=dt; if(r&&b.run===0&&b.shuttleT<=0&&inside(b)&&!(S.fx.storm>S.t)){ b.run=1; b.shuttleT=rand(25,70); }
+    if(b.run===1&&r){ ax+=(r.u+8-b.u)*0.6; ay+=(r.v-b.v)*0.6; if(dist(b,{u:r.u+8,v:r.v})<9){ arrive(b,r); b.run=0; } }
+    else if(b.run===1&&!r){ b.run=0; assignReefer(b); }
+    else { ax+=(b.gu-b.u)*0.25; ay+=(b.gv-b.v)*0.25; }
+    // fear: flee down the gradient, seaward bias
+    const [fx,fy]=fearGrad(b.u,b.v); const f=fearAt(b.u,b.v); const k=KN.avoid*(b.flee>0?2.2:1); ax-=fx*260*k; ay-=fy*260*k; if(f>0.25||b.flee>0){ ax-=14*k*(f+ (b.flee>0?0.6:0)); }
+    if(f>0.9&&inside(b)&&Math.random()<dt*1.2){ const alt=liveHots().filter(h=>h.side==='in'&&fearAt(h.u,h.v)<0.4).sort((a,b)=>Math.abs(a.v-b.v)-Math.abs(b.v-b.v))[0]; if(alt&&Math.random()<0.6){ b.gv=clamp(alt.v+rand(-alt.r,alt.r),v0,v1); b.gu=alt.u+rand(-alt.r,alt.r)*0.5; } else { b.gu=uAt(b.v,rand(1.05,1.35)); b.gv=b.v; } } // give up this ground
+    if(b.run===0&&Math.random()<dt*0.12){ const h=nearestHot(b.v+rand(-200,200)); if(h&&(h.side==='out'||inside(b)||Math.random()<0.25)){ const ang=rand(0,6.28), rr=Math.sqrt(Math.random())*h.r; const tv=clamp(h.v+Math.sin(ang)*rr,v0,v1); const tu=h.u+Math.cos(ang)*rr; if(fearAt(tu,tv)<0.5&&!onLand(tu,tv)){ b.gv=tv; b.gu=tu; } } }
+    ax+=Math.sin(b.ph*1.3+b.u*0.01)*9; ay+=Math.cos(b.ph*0.9)*9;
+    if(f<0.15&&!inside(b)&&b.gu>uAt(b.gv,1.0)&&Math.random()<dt*0.3){ /* ground is inside, keep heading */ }
+    // integrate
+    b.vu=(b.vu+ax*dt)*0.86; b.vv=(b.vv+ay*dt)*0.86; const spd=Math.hypot(b.vu,b.vv); const mx=(b.flee>0||b.run===1?110:60)*(0.8+0.3*KN.avoid); if(spd>mx){ b.vu*=mx/spd; b.vv*=mx/spd; }
+    b.u+=b.vu*dt+Math.sin(b.ph*0.7)*1.5*dt; b.v+=b.vv*dt+Math.cos(b.ph*0.5)*1.5*dt; if(spd>2) b.a=Math.atan2(b.vv,b.vu);
+    if(b.u<um+4) b.u=um+4; if(b.v<v0) b.v=v0; if(b.v>v1) b.v=v1; if(onLand(b.u,b.v)||!(inEEZ(b.u,b.v)||highSeas(b.u,b.v))){ b.u-=8; }
+    if(inside(b)){ insideN++; } }
+  // meters
+  S.stock=clamp(S.stock-0.0075*((S.L.drain&&curM()&&curM().hold)?S.L.drain:1)*(S.fx.count>S.t?1.4:1)*insideN*dt+(insideN<18?0.35*(1-insideN/18)*dt:0),0,100);
+  S.profit=clamp(S.profit+0.012*insideN*dt-0.25*dt-(S.fx.wto?0.12*dt:0),0,S.profitCap); for(const c of S.cutters) if(c.loan&&S.t>c.loan&&(c.state==='port'||c.state==='refuel')) c.gone=1; S.cutters=S.cutters.filter(c=>!c.gone);
+  // hints
+  { const mm=curM(); if(mm||!S.msg) S.hint=mm?`<b>${S.mi+1}/${S.L.missions.length}</b> · ${mm.txt}${S.mLeft!=null?` · <b style="color:${S.mLeft<6?'#D8322B':'inherit'}">${Math.ceil(S.mLeft)}s</b>`:''}`:S.L.cap&&S.capT>0?`Fleet profit under 20: <b>${Math.floor(S.capT)}/40 s</b> to a cap offer.`:S.L.goalTxt&&S.t<12?`Goal: <b>${S.L.goalTxt}</b>.`:S.stock<35?'The stock is falling. Cutters move the boats; they do not remove them.':S.cutters.every(c=>c.state==='port')?'Draw a <b>loop</b> to patrol, a <b>line</b> to board. Tap ships past the line.':''; }
+  const tx=$('#tx'); const mm=curM(); const h=S.msg?S.msg.t:S.hint; if(tx.innerHTML!==h) tx.innerHTML=h;
+  if(S.L.cap){ if(S.profit<20) S.capT+=dt; else S.capT=Math.max(0,S.capT-dt*2); if(S.capT>=40){ if(S.L.endless) capOffer(); else end('cap'); } }
+  updateEvents(dt);
+  if(S.stock<=8&&!S.L.scale) end('collapse'); else if(S.L.goal&&S.L.goal(S)) end('win'); else if(S.left<=0){ if(S.L.endless) nextSeason(); else end(S.L.win(S)?'win':'fail'); } }
+// ---------- draw ----------
+function draw(){ ctx.save(); if(shake>0) ctx.translate(Math.round((Math.random()-0.5)*shake),Math.round((Math.random()-0.5)*shake)); drawWorld(); if(!S){ ctx.restore(); return; }
+  
+  // fear field: clear water glow
+  if(!S.L.scale) for(let y=0;y<S.fh;y++) for(let x=0;x<S.fw;x++){ const f=S.fear[y*S.fw+x]; if(f<0.05) continue; const u=S.fu0+x*CELL, v=S.fv0+y*CELL; if(!inEEZ(u+CELL/2,v+CELL/2)) continue; const [sx,sy]=P(u,v); ctx.fillStyle=`rgba(120,200,255,${Math.min(0.3,f*0.24)})`; ctx.fillRect(sx,sy,CELL*K+0.6,CELL*K+0.6); }
+  // squid: faint red tint where the fish are; warming ring before one forms
+  if(!S.L.scale) for(const h of S.hots){ const [x,y]=P(h.u,h.v); const R=h.r*K; if(h.warm>0){ ctx.save(); ctx.setLineDash([3,7]); ctx.strokeStyle=`rgba(255,140,120,${0.15+0.15*Math.sin(tGlobal*4)})`; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(x,y,R*0.8,0,7); ctx.stroke(); ctx.restore(); continue; }
+    const fade=Math.min(1,h.age/6,(h.life-h.age)/8); const g=ctx.createRadialGradient(x,y,R*0.1,x,y,R); g.addColorStop(0,`rgba(230,90,70,${0.16*fade})`); g.addColorStop(1,'rgba(230,90,70,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill(); }
+  // wave warning
+  if(S.wave&&!S.L.scale){ const [,y]=P(0,S.wave.v); ctx.fillStyle=`rgba(226,71,63,${0.1+0.08*Math.sin(tGlobal*8)})`; ctx.fillRect(0,y-40,W,80); text(`wave in ${Math.ceil(S.wave.left)}`,W-14,y,12,'#FF8A80','right','rgba(11,37,69,.9)'); }
+  // strokes
+  if(!S.L.scale) for(const s of S.strokes){ ctx.save(); const young=Math.max(0,1-(S.t-s.born)/1.2); ctx.setLineDash(s.kind==='loop'?[6,6]:[2,5]); ctx.lineDashOffset=-tGlobal*30; ctx.strokeStyle=s.kind==='loop'?`rgba(61,220,151,${.65+.35*young})`:`rgba(255,255,255,${.55+.45*young})`; ctx.lineWidth=2+2*young; ctx.beginPath(); s.path.forEach((p,i)=>{ const [x,y]=P(p.u,p.v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); if(s.kind==='loop'){ ctx.closePath(); ctx.fillStyle='rgba(61,220,151,.07)'; ctx.fill(); } ctx.stroke(); if(s.kind==='line'){ const e=s.path[s.path.length-1]; const [x,y]=P(e.u,e.v); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(x,y,NMI200*0.16*K,0,7); ctx.stroke(); } ctx.restore(); }
+  // boats: fog of war — only what something of yours can see
+  const eyes=[]; if(S.flash<=0){ for(const c of S.cutters) if(c.state!=='port'&&c.state!=='refuel') eyes.push([c.u,c.v,NMI200*0.3]); for(const c of S.cutters) eyes.push([c.home.u,c.home.v,NMI200*0.22]); if(S.air.state!=='port'&&S.air.state!=='refuel') eyes.push([S.air.u,S.air.v,NMI200*0.4]); if(S.heli.state!=='port'&&S.heli.state!=='refuel') eyes.push([S.heli.u,S.heli.v,NMI200*0.3]); }
+  if(!S.L.scale) for(const e of eyes){ const [x,y]=P(e[0],e[1]); ctx.beginPath(); ctx.arc(x,y,e[2]*K,0,7); ctx.fillStyle='rgba(140,180,230,.05)'; ctx.fill(); }
+  const watched=new Set(); for(const r of S.reefers){ if(r.gone) continue; if((S.heli.state==='station'&&dist(S.heli,r)<NMI200*0.4)||(S.air.state==='station'&&dist(S.air,r)<NMI200*0.4)) watched.add(r.id); }
+  for(const b of S.boats){ if(b.gone) continue; let seen=S.L.scale||S.flash>0||b.tag>0||(S.L.n===1&&inside(b)); if(!seen){ for(const e of eyes){ const du=b.u-e[0],dv=b.v-e[1]; if(du*du+dv*dv<e[2]*e[2]){ seen=true; break; } } } if(!seen) continue;
+    const [x,y]=P(b.u,b.v); if(y<topPad-6||y>H-botPad+6||x<-6) continue; const ins=inEEZ(b.u,b.v);
+    const feeds=false; if(feeds&&b.tag>0){ const r=S.reefers[b.rid]; if(r&&!r.gone){ const [rx,ry]=P(r.u,r.v); ctx.save(); ctx.setLineDash([2,5]); ctx.strokeStyle='rgba(255,210,90,.55)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(rx,ry); ctx.stroke(); ctx.restore(); } }
+    if(feeds){ ctx.strokeStyle='#FFD25A'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(x,y,5.6,0,7); ctx.stroke(); }
+    if(S.L.scale){ ctx.fillStyle='rgba(255,105,160,.95)'; ctx.fillRect(x-1.2,y-1.2,2.4,2.4); continue; }
+    if(b.tag>0){ if(b.run===1){ ctx.strokeStyle='rgba(61,220,151,.35)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-b.vu*K*0.25,y-b.vv*K*0.25); ctx.stroke(); } ctx.fillStyle=`rgba(61,220,151,${0.6+0.3*Math.sin(tGlobal*5+b.ph)})`; ctx.beginPath(); ctx.arc(x,y,4.2,0,7); ctx.fill(); continue; }
+
+    const tw=Math.abs(Math.sin(tGlobal*2+b.ph)); ctx.fillStyle=b.dark?'#8a4a4a':`rgba(255,${ins?200:232},${ins?120:150},${0.7+0.3*tw})`; ctx.fillRect(x-1.7,y-1.7,3.4,3.4); }
+  if(S.L.scale){ const C=S.crowd, n=C.n|0; if(n){ // cached layer: only new dots are drawn each frame
+      const key=`${cv.width}x${cv.height}:${K}:${OX}:${OY}`; if(!C.layer||C.key!==key){ C.layer=C.layer||document.createElement('canvas'); C.layer.width=cv.width; C.layer.height=cv.height; C.key=key; C.drawn=0; }
+      if(C.drawn<n){ const lc=C.layer.getContext('2d'); lc.setTransform(cv.width/W,0,0,cv.height/H,0,0); lc.fillStyle='rgba(255,105,160,.85)'; lc.beginPath(); for(let i=C.drawn;i<n;i++){ const [x,y]=P(C.u[i],C.v[i]); lc.rect(x-1.1,y-1.1,2.2,2.2); } lc.fill(); C.drawn=n; }
+      ctx.drawImage(C.layer,0,0,W,H); }
+    if(S.mships) for(const m of S.mships){ const [x,y]=P(m[0],m[1]); reefer2(x,y,m[2],2.4,'#E0A52E',0.95); }
+    const live=S.boats.filter(b=>!b.gone).length, shown=live+n;
+    ctx.fillStyle='rgba(11,37,69,.88)'; ctx.beginPath(); ctx.roundRect(W/2-170,H-botPad-50,340,48,10); ctx.fill();
+    text(`${shown.toLocaleString('en-US')} fishing ships`,W/2,H-botPad-34,15,'#fff','center','rgba(11,37,69,.92)');
+    text(C.target>2551?'Outside estimate, all fisheries':C.target?'China’s official fleet, all fisheries':'Squid jiggers at Peru’s line',W/2,H-botPad-14,10.5,'rgba(255,255,255,.85)','center','rgba(11,37,69,.92)'); }
+  // selection feedback while the finger is down
+  if(S.down&&S.cand&&S.trail.length){ const f=S.trail[S.trail.length-1]; let sx,sy; if(S.cand.kind==='air'){ [sx,sy]=P(S.air.u,S.air.v); } else if(S.cand.kind==='cutter'&&S.cand.c){ [sx,sy]=P(S.cand.c.u,S.cand.c.v); }
+    if(sx!=null){ ctx.save(); ctx.setLineDash([3,7]); ctx.strokeStyle=S.cand.ok?'rgba(255,255,255,.55)':'rgba(255,120,120,.6)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(f.x,f.y); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle=S.cand.ok?'#fff':'#FF4B4B'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(sx,sy,20+3*Math.sin(tGlobal*10),0,7); ctx.stroke(); ctx.restore(); }
+    if(S.cand.kind==='cutter'&&S.cand.c){ const [hx,hy]=P(S.cand.c.home.u,S.cand.c.home.v); ctx.save(); ctx.setLineDash([2,8]); ctx.strokeStyle='rgba(61,220,151,.35)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(hx,hy,cutRange()*K,0,7); ctx.stroke(); ctx.restore(); }
+    const tr=S.trail; let what=S.cand.label; if(S.cand.ok&&tr.length>1){ const closed=Math.hypot(tr[0].x-tr[tr.length-1].x,tr[0].y-tr[tr.length-1].y)<44&&polyLen(tr)>120&&polyArea(tr)>1800; if(S.cand.kind==='air'){ what=closed?'AIRCRAFT · patrol':'AIRCRAFT · sweep'; if(!closed){ const e=tr[tr.length-1]; const [eu,ev]=S2M(e.x,e.y); const tgt=S.reefers.find(r=>!r.gone&&r.listed&&dist({u:r.fix?r.fix.u:r.u,v:r.fix?r.fix.v:r.v},{u:eu,v:ev})<NMI200*0.3); if(tgt) what=fixFresh(tgt)?'PRIVATEER · letter of marque on '+tgt.name:'PRIVATEER · fix too old — follow it first'; } if(closed){ let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9; for(const p of tr){ const [u,v]=S2M(p.x,p.y); u0=Math.min(u0,u);u1=Math.max(u1,u);v0=Math.min(v0,v);v1=Math.max(v1,v); } const inb=S.reefers.filter(r=>!r.gone&&r.known&&(r.fix?r.fix.u:r.u)>u0-10&&(r.fix?r.fix.u:r.u)<u1+10&&(r.fix?r.fix.v:r.v)>v0-10&&(r.fix?r.fix.v:r.v)<v1+10); if(inb.length===1) what=fixAge(inb[0])<20?'HELICOPTER · follow '+inb[0].name:'AIRCRAFT · patrol (fix too old to follow)'; } } else what=closed?'CUTTER · patrol':(polyLen(tr)>24?'CUTTER · board at end':'CUTTER'); }
+    text(what,f.x,f.y-34,12,S.cand.ok?'#fff':'#FF8A80','center','rgba(11,37,69,.92)'); }
+  // live stroke
+  if(S.down&&S.trail.length>1){ const tr=S.trail; { const hs=tr.filter(p=>{ const [u,v]=S2M(p.x,p.y); return highSeas(u,v); }); if(hs.length>=tr.length*0.5){ let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const p of hs){ x0=Math.min(x0,p.x); x1=Math.max(x1,p.x); y0=Math.min(y0,p.y); y1=Math.max(y1,p.y); } ctx.save(); ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(120,170,230,.9)'; ctx.lineWidth=2; ctx.strokeRect(x0-10,y0-10,x1-x0+20,y1-y0+20); ctx.fillStyle='rgba(120,170,230,.12)'; ctx.fillRect(x0-10,y0-10,x1-x0+20,y1-y0+20); ctx.restore(); text('AIR PATROL',(x0+x1)/2,y0-22,13,'#9fc9ff','center','rgba(11,37,69,.9)'); { const [u0,v0]=S2M(x0-10,y0-10),[u1,v1]=S2M(x1+10,y1+10); const rows=Math.max(1,Math.round((v1-v0)/(NMI200*0.5))); const lap=rows*(u1-u0)+(v1-v0); const secs=Math.round(lap/(170*0.42)); let ships=0; for(const r of S.reefers) if(!r.gone&&r.u>u0&&r.u<u1&&r.v>v0&&r.v<v1) ships++; text(`${ships} ship${ships===1?'':'s'} in box · ~${secs}s per pass`,(x0+x1)/2,y1+24,10.5,'rgba(255,255,255,.85)','center','rgba(11,37,69,.9)'); } } }
+  ctx.save(); const closed=Math.hypot(tr[0].x-tr[tr.length-1].x,tr[0].y-tr[tr.length-1].y)<44&&polyLen(tr)>120&&polyArea(tr)>1800; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=closed?'rgba(61,220,151,.9)':'rgba(255,255,255,.85)'; ctx.lineWidth=3; ctx.beginPath(); tr.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); if(closed){ ctx.closePath(); ctx.fillStyle='rgba(61,220,151,.1)'; ctx.fill(); } ctx.stroke();
+    if(!closed){ const e=tr[tr.length-1]; const [eu,ev]=S2M(e.x,e.y); const R=NMI200*0.16; let n=0; for(const b of S.boats){ if(!b.gone&&inEEZ(b.u,b.v)&&dist(b,{u:eu,v:ev})<R) n++; } ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(e.x,e.y,R*K,0,7); ctx.stroke(); text(String(Math.min(5,n))+(n>5?'+':'')+' · board',e.x,e.y+R*K+16,13,'#fff','center','rgba(11,37,69,.9)'); if(polyLen(tr)<200) text('cross the line to make a loop',tr[0].x,tr[0].y+22,10,'rgba(255,255,255,.7)','center','rgba(11,37,69,.9)'); }
+    else text('PATROL',tr[0].x,tr[0].y-14,12,'#3DDC97','center','rgba(11,37,69,.9)'); ctx.restore(); }
+  // reefers: unknown = nothing; known = fix circle + hull at fix; tracked = live
+  if(T('reefers')) for(const r of S.reefers){ if(r.gone||!r.known) continue; const tracked=S.air.state==='station'&&S.air.job&&S.air.job.r===r; const live=tracked||S.flash>0; const fu=live?r.u:(r.fix?r.fix.u:r.u), fv=live?r.v:(r.fix?r.fix.v:r.v); const [x,y]=P(fu,fv); const lostNow=fixAge(r)>FIX_LOST&&!live; const R=live||lostNow?0:fixRadius(r)*K;
+    if(R>6){ ctx.save(); ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fill(); ctx.restore(); }
+    const lost=fixAge(r)>FIX_LOST&&!live; if(lost){ continue; }
+    if(r.evFlash>0){ r.evFlash-=0.016; ctx.globalAlpha=Math.min(1,r.evFlash*2); ovArc(x,y,26+(0.6-r.evFlash)*30,0,6.29,'#FFD25A',3); ctx.globalAlpha=1; } reefer2(x,y,r.da!=null?r.da:r.a,10,r.listed?'#FF4B4B':r.state==='rotate'?'#8892A0':'#E0A52E',live?1:0.55); if(r.dark>0&&live){ ctx.fillStyle='rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(x,y,14,0,7); ctx.fill(); }
+    if(r.escort&&live){ ctx.save(); ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(220,225,235,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,30,0,7); ctx.stroke(); ctx.restore(); }
+    ctx.lineWidth=5; for(let k=0;k<3;k++){ const a0=-Math.PI/2+k*2.094+0.12,a1=-Math.PI/2+(k+1)*2.094-0.12; ovArc(x,y,30,a0,a1,k<r.stamps?(r.listed?'#FF4B4B':'#FFB400'):'rgba(255,255,255,.3)',5); }
+    // evidence bubbles (tap to bank)
+    if(r.bubbles>=1){ const n=Math.floor(r.bubbles); for(let k=0;k<n;k++){ const bx=x-((n-1)*7)/2+k*7, by=y-48-Math.sin(tGlobal*4+k)*2; ctx.fillStyle='#3DDC97'; ctx.beginPath(); ctx.arc(bx,by,3.5,0,7); ctx.fill(); }  }
+    // seal: listed without bounty
+    if(r.listed&&!r.bounty){ ctx.save(); ctx.translate(x+30,y-30); ctx.fillStyle='#FF4B4B'; ctx.beginPath(); ctx.arc(0,0,11+Math.sin(tGlobal*6)*1.5,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('£',0,0); ctx.restore(); text('tap seal: post bounty',x+30,y-48,9.5,'#FF8A80','center','rgba(11,37,69,.9)'); }
+    if(r.bounty){ text('BOUNTY · privateers hunt it',x,y-48,10,'#FFB400','center','rgba(11,37,69,.9)'); }
+    // hold clock
+    ovArc(x,y,22,-1.57,-1.57+6.283*r.hold,'rgba(224,165,46,.8)',2);
+    if(r.warn&&live){ ctx.save(); ctx.setLineDash([6,5]); ctx.strokeStyle='#FF8C42'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,31+Math.sin(tGlobal*9)*2,0,7); ctx.stroke(); ctx.restore(); }
+    const lbl=r.listed?(r.bounty?(fixFresh(r)||live?'LISTED · fix fresh':'LISTED · fix stale — keep eyes on it'):'LISTED'):r.state==='rotate'?'rotating out':r.stamps===2?'banned':r.stamps===1?'on notice':''; if(lbl) text(lbl,x,y-34,10.5,r.listed?'#FF4B4B':'#FFB400','center','rgba(11,37,69,.9)'); if(r.listed){ ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle=`rgba(255,75,75,${0.5+0.4*Math.sin(tGlobal*6)})`; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(x,y,38,0,7); ctx.stroke(); ctx.restore(); }
+    text(`${r.name}${live?' · '+r.flag:''}${r.dark>0&&live?' · dark':''}${!live?' · fix '+Math.round(fixAge(r))+'s':''}`,x,y+24,9.5,'#cfd4dc','center','rgba(11,37,69,.85)'); }
+  // airfield
+  // airfield: drawn in the map layer
+  // inbound motherships
+  if(T('calls')) for(const r of S.reefers){ if(r.gone||!r.call) continue; const [x,y]=P(r.u,r.v); const [px,py]=P(r.call.port.u,r.call.port.v); if(r.call.phase==='held'){ ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fillRect(Math.round(x-20),Math.round(y+16),40,4); ctx.fillStyle='#FF8C42'; ctx.fillRect(Math.round(x-20),Math.round(y+16),40*(1-r.call.t/15),4); }
+    if(r.call.phase==='warn'||r.call.phase==='in'){ ctx.save(); ctx.setLineDash([4,6]); ctx.strokeStyle='rgba(255,180,0,.5)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(px,py); ctx.stroke(); ctx.restore(); } if(inEEZ(r.u,r.v)){ reefer2(x,y,r.a,10,'#E0A52E',1); const eta=Math.max(0,Math.round(dist(r,r.call.port)/38)); text(r.call.phase==='quay'?`at the quay · inspecting ${Math.ceil(r.call.t)}s`:r.call.phase==='escorted'?'STOPPED · escorted to port':r.call.phase==='held'?`DETAINED · ${Math.ceil(r.call.t)}s`:r.call.phase==='out'?'released · leaving':r.call.phase==='abort'?'turning back':`${r.name} → ${r.call.port.name.toUpperCase()} · ${eta}s · tap to stop`,x,y-26,10.5,'#FFB400','center','rgba(11,37,69,.9)'); if(r.call.phase==='quay'){ ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fillRect(x-20,y+16,40,4); ctx.fillStyle='#fff'; ctx.fillRect(x-20,y+16,40*(1-r.call.t/10),4); } } }
+  // ports
+  // ports: drawn in the map layer
+  // helipad
+  if(T('heli')) { const [x,y]=P(S.heli.hu,S.heli.hv); if(S.heli.state==='port'||S.heli.state==='refuel'){ heliIcon(x,y-20); if(S.heli.state==='refuel'){ ovArc(x,y-20,20,-1.57,-1.57+6.283*(S.heli.fuel/HFUEL),'rgba(255,255,255,.6)',2); } } }
+  // helicopter out
+  { const Hh=S.heli; if(Hh.state!=='port'&&Hh.state!=='refuel'){ const [x,y]=P(Hh.u,Hh.v); ctx.beginPath(); ctx.arc(x,y,NMI200*0.3*K,0,7); ctx.fillStyle='rgba(120,170,230,.08)'; ctx.fill(); ctx.setLineDash([3,6]); ctx.strokeStyle='rgba(120,170,230,.5)'; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]); heliIcon(x,y); ovArc(x,y,14,-1.57,-1.57+6.283*clamp(Hh.fuel/HFUEL,0,1),Hh.fuel<HFUEL*0.3?'#FF4B4B':'rgba(255,255,255,.75)',2);
+      if(Hh.state==='station'&&Hh.job&&Hh.job.kind==='track'){ const r=Hh.job.r; const inb=S.boats.filter(b=>!b.gone&&b.tag>0&&b.rid===r.id).length; const [rx,ry]=P(r.u,r.v); text(`records ${r.stamps}/3 · ${inb} tagged inbound`,rx,ry+36,10,'#3DDC97','center','rgba(11,37,69,.9)'); } } }
+  // aircraft
+  { const A=S.air; if(A.state!=='port'&&A.state!=='refuel'){ const [x,y]=P(A.u,A.v); if(A.state==='station'&&A.job){ if(A.job.kind==='eight'){ ctx.save(); ctx.setLineDash([3,7]); ctx.strokeStyle='rgba(120,170,230,.45)'; ctx.lineWidth=1.5; ctx.beginPath(); A.job.wps.forEach((p,i)=>{ const [x,y]=P(p.u,p.v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.closePath(); ctx.stroke(); ctx.restore(); } else if(A.job.kind==='search'){ if(A.job.loop){ const [x0,y0]=P(A.job.u0,A.job.v0),[x1,y1]=P(A.job.u1,A.job.v1); ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(120,170,230,.7)'; ctx.lineWidth=1.5; ctx.strokeRect(x0,y0,x1-x0,y1-y0); ctx.fillStyle='rgba(120,170,230,.12)'; ctx.fillRect(x0,y0,x1-x0,y1-y0); ctx.restore(); } else { ctx.save(); ctx.setLineDash([2,6]); ctx.strokeStyle='rgba(120,170,230,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); A.job.path.forEach((p,i)=>{ const [x,y]=P(p.u,p.v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke(); ctx.restore(); } } else { ctx.beginPath(); ctx.arc(x,y,NMI200*0.4*K,0,7); ctx.fillStyle='rgba(120,170,230,.12)'; ctx.fill(); } }
+      ctx.beginPath(); ctx.arc(x,y,NMI200*0.4*K,0,7); ctx.fillStyle='rgba(120,170,230,.08)'; ctx.fill(); ctx.setLineDash([3,6]); ctx.strokeStyle='rgba(120,170,230,.5)'; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]); planeIcon(x,y,A.a); if(false){ const r=A.job.r; const inb=S.boats.filter(b=>!b.gone&&b.tag>0&&b.rid===r.id).length; const [rx,ry]=P(r.u,r.v); text(`record ${r.stamps}/3 · dockings ${Math.min(2,Math.floor(r.prog))}/2 · ${inb} inbound`,rx,ry+36,10,'#3DDC97','center','rgba(11,37,69,.9)'); ovArc(rx,ry,20,-1.57,-1.57+6.283*Math.min(1,r.prog/2),'#3DDC97',3); } { ovArc(x,y,16,-1.57,-1.57+6.283*clamp(A.fuel/FUEL,0,1),A.fuel<FUEL*0.3?'#FF4B4B':'rgba(255,255,255,.75)',2); } }
+    else if(T('plane')) { const [x,y]=P(A.hu,A.hv); planeIcon(x,y-12,-0.5); if(A.state==='refuel'){ ovArc(x,y-12,22,-1.57,-1.57+6.283*(A.fuel/FUEL),'rgba(255,255,255,.6)',2); } } }
+  // privateer dock
+  if(T('bounty')) { const [x,y]=P(S.priv.hu,S.priv.hv); if(S.priv.state==='port') reefer2(x,y-6,Math.PI,4,'#1b1b1b'); }
+  // privateer
+  if(S.priv.state!=='port'){ const [x,y]=P(S.priv.u,S.priv.v); reefer2(x,y,S.priv.da!=null?S.priv.da:S.priv.a,6,'#1b1b1b'); text(S.priv.state==='search'?'privateer · searching':S.priv.state==='home'?'privateer · returning':'privateer',x,y+16,9.5,'#FFB400','center','rgba(11,37,69,.9)'); }
+  // satellite flash
+  if(S.flash>0){ ctx.fillStyle=`rgba(200,230,255,${S.flash*0.18})`; ctx.fillRect(0,0,W,H); const y=topPad+(H-topPad-botPad)*(1-S.flash); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fillRect(0,y,W,2); }
+  // strike readability: boats about to be boarded, boarding ring, empty label
+  for(const c of S.cutters){ if(c.state!=='run'&&c.state!=='boarding'&&c.state!=='loiter') continue; const path=c.job&&c.job.path; if(!path) continue; const e=path[path.length-1]; const [ex,ey]=P(e.u,e.v); const R=NMI200*0.16; const near=c.state!=='run'||dist(c,e)<NMI200*0.5; if(!near) continue;
+    let n=0; for(const b of S.boats){ if(b.gone||!inside(b)||dist(b,e)>R) continue; n++; const [x,y]=P(b.u,b.v); ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.stroke(); }
+    if(c.state==='boarding'){ ovArc(ex,ey,R*K,-1.57,-1.57+6.283*Math.min(1,c.bt),'#fff',4); text('BOARDING',ex,ey-R*K-12,13,'#fff','center','rgba(11,37,69,.9)'); }
+    
+    else { text(`${Math.min(5,n)} in reach`,ex,ey-R*K-12,11,'#fff','center','rgba(11,37,69,.9)'); } }
+  // cutters
+  for(const c of S.cutters){ const [x,y]=P(c.u,c.v); const grey=c.state==='port'||c.state==='refuel'||c.state==='escort'||c.state==='home'||c.state==='escortR'; if(S.L.scale){ cutterShape(x,y,c.a,12,true); if(c===S.cutters.reduce((m,k)=>P(k.u,k.v)[1]<P(m.u,m.v)[1]?k:m)) text('Peru: 6 patrol ships',x-14,y,11,'#fff','right','rgba(11,37,69,.92)'); continue; } if(c.state!=='port'&&c.state!=='refuel'){ ctx.beginPath(); ctx.arc(x,y,NMI200*0.09*K,0,7); ctx.strokeStyle='rgba(61,220,151,.35)'; ctx.lineWidth=1; ctx.stroke(); }
+    cutterShape(x,y,c.a,12,grey); if(c.prizes&&c.state==='escort'){ text(`+${c.prizes}`,x,y-14,10,'#fff','center','rgba(11,37,69,.9)'); }
+    // endurance ring
+    ovArc(x,y,22,-1.57,-1.57+6.283*clamp(c.end/KN.endurance,0,1),c.end<KN.endurance*0.25?'#FF4B4B':'#fff',2.5); }
+  for(const A of [S.air,S.heli]){ if(A.state==='port'||A.state==='refuel') continue; let n=0; for(const r of S.reefers) if(!r.gone&&r.carrier===A.kind) n+=Math.floor(r.bubbles); if(n>0){ const [x,y]=P(A.u,A.v); text(`evidence ${n}${A.state==='home'?' · filing':n>=3?' · tap to file':''}`,x,y+24,10.5,'#3DDC97','center','rgba(11,37,69,.9)'); } }
+  drawFx(); ctx.restore(); }
+// ---------- flow ----------
+function show(h){ $('#card').innerHTML=h; $('#card').scrollTop=0; $('#overlay').classList.remove('hidden'); }
+function hide(){ $('#overlay').classList.add('hidden'); }
+function title(){ S=null; const stars=n=>'★'.repeat(save.stars[n]||0)+'☆'.repeat(3-(save.stars[n]||0)); const unlocked=n=>n===1||(save.stars[n-1]||0)>0||(n===5&&save.l4>=1)||save.all;
+  let h=`<div class="k">A playable paper</div><h1>ARMADA</h1><p style="margin-bottom:4px">Peru against a distant-water fleet it can't board.</p><p style="font-size:12px;color:#7a6a45;margin-bottom:8px">Plays out ${PAPER}. A model of its argument, not an endorsement.</p><div class="lvls">`;
+  for(const L of LEVELS){ const u=unlocked(L.n); h+=`<button class="lv ${u?'':'lock'}" data-n="${L.n}" ${u?'':'disabled'}><b>${L.n}</b><span>${L.title}</span><i>${!u?'locked':L.scale?'finale':stars(L.n)}</i></button>`; }
+  h+=`</div><button class="go alt" id="kn" style="margin-top:10px">Knobs</button> <button class="go alt" id="ua" style="margin-top:10px">Unlock all</button> <button class="go alt" id="nb" style="margin-top:10px">Notebook</button><button class="scale" id="rsb"><span class="sk">The real scale</span><span class="sh">2,551 ships. Maybe 17,000.</span><span class="ss">After the game: see what six patrol ships are up against</span><span class="sa">→</span></button>`; h+=`<p class="diag">${diag()}</p>`; show(h);
+  document.querySelectorAll('.lv').forEach(b=>b.onclick=()=>{ audio(); LVL=+b.dataset.n-1; intro(); }); $('#kn').onclick=knobs; $('#nb').onclick=notebook; $('#rsb').onclick=()=>{ audio(); LVL=LEVELS.length-1; intro(); }; $('#ua').onclick=()=>{ save.all=true; persistL(); title(); }; }
+function intro(){ const L=LEVELS[LVL]; S=null; note('facts',L.fact); show(`<div class="k">Level ${L.n} of ${LEVELS.length}</div><h2>${L.title}</h2><p>${L.fact}</p><p><b>${L.rule}</b></p>${L.goalTxt?`<p style="font-size:13px;color:#7a6a45">Goal: ${L.goalTxt}</p>`:''}<button class="go" id="go">Play</button> <button class="go alt" id="bk">Levels</button>`); $('#go').onclick=()=>{ audio(); start(); }; $('#bk').onclick=title; }
+function start(){ FACTQ.length=0; makeLevel(); rec('start',{}); S.factT=1.5; S.mi=0; S.mLeft=null; S.failTxt=null; S.mScript=null; if(S.L.mfacts) S.L.mfacts.forEach(f=>f.shown=0); if(S.L.missions) startMission(0); redrawMap(); paintToolsMap(); hide(); }
+function paintToolsMap(){}
+function knobs(){ let h='<h2>Knobs</h2>'; for(const [k,label,mn,mx,st] of KNOBS) h+=(k==='swarm'?'<p style="font-size:11.5px;color:#5a6b7d;margin:6px 0 -2px">Real fleet: <b>2,551</b> official (China, 2023) ↔ <b>~17,000</b> able to fish distant waters (ODI 2020).</p>':'')+`<div class="knob"><span>${label}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${KN[k]}" data-k="${k}"><b id="kv-${k}">${KN[k]}</b></div>`; h+=`<p style="font-size:12px;color:#7a6a45">Swarm size and cutters apply on restart; the rest apply live.</p><div class="knob"><span>Record play log</span><input type="checkbox" id="recOn" ${REC.on?'checked':''} style="width:22px;height:22px;flex:none"><b id="recN">${REC.log.length}</b></div><p style="font-size:12px;color:#7a6a45">For playtests: logs strokes, taps, facts, cards and results. Nothing leaves this device unless you download it.</p><button class="go alt" id="recDl" style="margin-bottom:10px">Download log</button> <button class="go alt" id="recClr" style="margin-bottom:10px">Clear</button><p class="diag">${diag()}</p><button class="go" id="kok">${S?'Resume':'Back'}</button> <button class="go alt" id="krs">Restart</button>`; show(h);
+  $('#recOn').onchange=e=>{ REC.on=e.target.checked; rec('recording',{on:true}); $('#recN').textContent=REC.log.length; }; $('#recDl').onclick=recDownload; $('#recClr').onclick=()=>{ REC.log.length=0; $('#recN').textContent=0; };
+  document.querySelectorAll('.knob input[type=range]').forEach(inp=>inp.oninput=()=>{ KN[inp.dataset.k]=parseFloat(inp.value); $('#kv-'+inp.dataset.k).textContent=inp.value; }); $('#kok').onclick=()=>{ if(S&&!S.ended){ S.paused=false; hide(); } else title(); }; $('#krs').onclick=()=>start(); }
+function chart(){ const h=S.hist; if(h.length<2) return ''; const Wc=380,Hc=70; const pts=h.map((p,i)=>`${(i/(h.length-1)*Wc).toFixed(1)},${(Hc-p/100*Hc).toFixed(1)}`).join(' '); return `<svg viewBox="0 0 ${Wc} ${Hc}" width="100%" height="70" style="display:block;background:#fff;border:2px solid #0B2545;border-radius:10px;margin:0 0 10px"><polyline points="${pts}" fill="none" stroke="#4FC3F7" stroke-width="3"/></svg>`; }
+function nextSeason(){ S.left+=SEASON; S.season=(S.season||1)+1; rec('season',{season:S.season,stock:Math.round(S.stock)}); const st=S.stock>50?3:S.stock>35?2:1; save.stars[S.L.n]=Math.max(save.stars[S.L.n]||0,st); save.best7=Math.max(save.best7||0,S.season-1); persistL();
+  for(let i=0;i<25;i++) spawn('out'); SND.step(); toast(`<b>Season ${S.season}</b> · the fleet returns larger`,false,4500); }
+function capOffer(){ S.paused=true; S.capT=0; SND.win(); show(`<span class="stamp ok">BEIJING OFFERS A CAP</span><p>Beijing will cap the fleet if the Letters of Marque end.</p><p style="font-size:13px;color:#7a6a45">The paper’s aim is a negotiated cap, not endless seizure.</p><button class="go" id="capY">Accept the cap</button> <button class="go alt" id="capN">Refuse · play on</button>`);
+  $('#capY').onclick=()=>{ rec('cap',{choice:'accept'}); S.paused=false; hide(); end('cap'); }; $('#capN').onclick=()=>{ rec('cap',{choice:'refuse'}); S.paused=false; hide(); S.refused=(S.refused||0)+1; S.profitCap=100; S.profit=clamp(S.profit+30,0,100); for(let i=0;i<40;i++) spawn('out'); toast('<b>Refused.</b> Subsidies rise and more boats sail.',true,4500); }; }
+function scaleGraphic(){ const N=S.need||{}, rows=[['Squid jiggers at Peru’s line','~400',N.local],['China’s official distant-water fleet','2,551',N.official],['Outside estimate','~17,000',N.estimate]];
+  const max=Math.max(...rows.map(r=>r[2]||0),6);
+  const bar=(w,col,label)=>`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><div style="height:14px;width:${Math.max(0.8,w/max*100)}%;background:${col};border-radius:3px;flex:none;max-width:72%"></div><span style="font-size:12.5px;font-weight:800;white-space:nowrap">${label}</span></div>`;
+  return `<span class="stamp ok">THE REAL SCALE</span><p style="margin:8px 0 6px">Patrol ships needed to keep every fishing ship in radar range (~12 nm each), against the <b>6</b> Peru has.</p>`+
+    rows.map(r=>`<div style="margin:10px 0 4px"><div style="font-size:13px;font-weight:800">${r[0]} · ${r[1]} ships</div>${bar(r[2]||0,'#3DDC97',`${(r[2]||0).toLocaleString('en-US')} needed`)}${bar(6,'#8a97a6','6 Peru has')}</div>`).join('')+
+    `<p style="font-size:11.5px;color:#7a6a45;margin:6px 0 10px">The larger fleets are drawn as if all on Peru’s coast; in reality they fish every ocean. Radar range is a generous estimate against small boats.</p>`+
+    `<div style="border-left:4px solid #D8322B;padding-left:9px;margin:10px 0"><b style="font-size:13.5px">Built for two jobs.</b><p style="font-size:13px;margin:4px 0">China’s 2015 rules set “national defense requirements” for building new civilian ships and refitting old ones, and a 2016–17 law lets the military call on them. Some maritime-militia fishing boats have strengthened hulls and ramming rails. US Naval War College analysts read PLA writing as treating civilian and militia ships as logistics for a possible Taiwan operation.</p><p style="font-size:11px;color:#7a6a45;margin:0">Sources: USCC testimony (Thorne, 2024); US DoD China report 2024; CMSI China Maritime Reports 21 & 25.</p></div>`; }
+function end(kind){ if(S.ended) return; S.ended=kind; rec('end',{kind,stock:Math.round(S.stock),profit:Math.round(S.profit),relations:S.bj,boarded:S.boarded,tags:S.tags,records:S.records,bans:S.bans,listed:S.listed,taken:S.loms,season:S.season||1,mission:S.mi}); const L=S.L; const won=kind==='win'||kind==='cap'; won?SND.win():SND.end(); paintLom();
+  let st=0; if(won){ st=1; if(S.stock>50) st=2; if(st===2&&L.stretch&&L.stretch(S)) st=3; if(!L.stretch&&S.stock>50) st=3; save.stars[L.n]=Math.max(save.stars[L.n]||0,st); }
+  if(L.n===4&&!won) save.l4++; persistL();
+  const head=L.scale?'<span class="stamp ok">THE REAL SCALE</span>':kind==='cap'?'<span class="stamp ok">BEIJING OFFERS A CAP</span>':won?'<span class="stamp ok">LEVEL CLEARED</span>':kind==='crisis'?'<span class="stamp">TRADE RETALIATION</span>':kind==='collapse'?'<span class="stamp">STOCK COLLAPSED</span>':S.failTxt?'<span class="stamp">MISSION FAILED</span>':'<span class="stamp">NOT ENOUGH</span>';
+  const one=L.scale?'':`${S.boarded} boarded · ${S.records} records · ${S.bans} bans${T('list')?` · ${S.listed} listed`:''}${T('bounty')?` · ${S.loms} taken`:''}${L.endless?` · season ${S.season||1}`:''}`;
+  let lesson=L.lesson, extra='', next='';
+  const REAL={1:`You boarded ${S.boarded} boat${S.boarded===1?'':'s'}. Argentina has made about 80 seizures since 1986.`,2:`You watched ${S.reefers.filter(r=>r.known).length} motherships. In reality 30–150 of them serve the whole fleet.`,3:`One ban moved one ship. In 2022 the US sanctioned 157 vessels at once, and the fleet is still there.`,4:`Ecuador faces 200–300 ships near the Galápagos with a handful of patrol boats.`,5:`Letters of Marque: US Constitution, Art. I §8. Last issued by Madison in 1812.`,6:`Peru exports about $22.5B a year to China. That is the leverage behind trade retaliation.`,7:`The paper’s end goal is a negotiated cap on the fleet, not endless seizure.`,8:`Peru loses about $300M a year (2024), and up to ~$800M by outside estimates. Argentina’s legal squid quota is 150,000 t; 600–800,000 t are taken illegally.`};
+  const realLine=REAL[L.n]?`<p style="font-size:13px;background:#eef3f8;border-radius:8px;padding:8px 10px;margin:8px 0"><b>Real world:</b> ${REAL[L.n]}</p>`:'';
+  const simp=LIMIT[L.n]?`<p style="font-size:13px;border-left:4px solid #E0A52E;padding-left:8px;margin:8px 0"><b>What this simplifies:</b> ${LIMIT[L.n]}</p>`:L.n===7?`<details open style="font-size:13px;margin:8px 0"><summary style="font-weight:700;cursor:pointer">What this game simplified</summary><ul style="margin:6px 0 0;padding-left:18px;line-height:1.5"><li><b>Legality.</b> Most squid fishing past the line is unregulated, not illegal. On the high seas only the flag state may board a ship, so most states would treat privateer seizures as piracy.</li><li><b>Crews.</b> Seizing or disabling ships endangers crews who are often trafficked workers.</li><li><b>Cost and oversight.</b> The paper doesn’t price privateers or say who checks them.</li><li><b>Escalation.</b> Beijing could answer with militia pressure elsewhere or trade leverage; whether it stops after a third strike is unknown.</li><li><b>Scale.</b> The fleet is 2,551 vessels by China’s own count (2023) and up to ~17,000 able to fish distant waters (ODI 2020).</li><li><b>Not only China.</b> Spanish, Portuguese, Russian and Vanuatu-flagged ships work the same edges.</li></ul></details>`:''; if(!won&&S.failTxt) lesson=`<b>${S.failTxt}</b> Retry: it takes under a minute.`;
+  if(L.n===4&&!won){ if(save.l4>=2){ extra=`<p style="border-left:4px solid #D8322B;padding-left:8px"><b>The US Congress authorises Letters of Marque and Reprisal. Peru provides the ports.</b></p>`; next=`<button class="go" id="nx">Level 5 →</button>`; } else { extra=`<p style="font-size:13px;color:#7a6a45">This season can’t be held with what you have. Try once more — or skip ahead.</p>`; next=`<button class="go alt" id="nx">Skip to Level 5</button>`; } }
+  else if(won&&LVL<LEVELS.length-1) next=`<button class="go" id="nx">Next level →</button>`;
+  if(kind==='cap') lesson='Beijing offers to cap the fleet in exchange for an end to the letters. The aim was never endless seizure.';
+  setTimeout(()=>{ if(L.scale){ show(`${scaleGraphic()}<p>${lesson}</p>${argLadder(L.n)}<button class="go" id="again">Replay</button> <button class="go alt" id="lv">Levels</button>`); $('#again').onclick=()=>{ LVL=L.n-1; start(); }; $('#lv').onclick=title; return; } show(`${head}${won&&!L.scale?`<div style="font-size:26px;color:#E0A52E;margin:-4px 0 6px">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>`:''}${(S.failTxt&&!won)||L.scale?'':chart()}<p><b>${one}</b></p><p>${lesson}</p>${realLine}${simp}${argLadder(won||L.n===4?L.n:0)}${extra}${won&&L.stretchTxt&&st<3?`<p style="font-size:12.5px;color:#7a6a45">★★★: fish above 50 and ${L.stretchTxt}</p>`:''}${next} <button class="go ${next?'alt':''}" id="again">Retry</button> <button class="go alt" id="lv">Levels</button>`);
+    if($('#nx')) $('#nx').onclick=()=>{ LVL=Math.min(LEVELS.length-1,L.n===4?4:LVL+1); intro(); }; $('#again').onclick=()=>{ LVL=L.n-1; start(); }; $('#lv').onclick=title; },700); }
+$('#menubtn').onclick=()=>{ audio(); if(!S||S.ended){ title(); return; } S.paused=true; show(`<h2>Paused · Level ${S.L.n}</h2><p>${S.L.rule}</p><button class="go" id="res">Resume</button> <button class="go alt" id="rs">Restart</button> <button class="go alt" id="lv3">Levels</button> <button class="go alt" id="kn3">Knobs</button>`); $('#res').onclick=()=>{ S.paused=false; hide(); }; $('#rs').onclick=start; $('#lv3').onclick=title; $('#kn3').onclick=knobs; };
+$('#knobbtn').onclick=()=>{ audio(); if(S&&!S.ended) S.paused=true; knobs(); };
+addEventListener('keydown',e=>{ if(e.code==='Space'&&S&&!S.ended){ e.preventDefault(); if(S.paused&&$('#res')) $('#res').click(); else if(!S.paused) $('#menubtn').click(); } else if(e.code==='Escape'&&S&&!S.ended&&!S.paused) $('#menubtn').click();
+  // desktop shortcuts for the three bottom buttons (ignored while typing, with modifiers, on key repeat, or when paused)
+  else if(!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||'')&&S&&!S.ended&&!S.paused){ const b={KeyP:'#b-plane',KeyH:'#b-heli',KeyB:'#lom'}[e.code]; if(b){ e.preventDefault(); $(b).click(); } } });
+// switching tabs or minimising pauses the game instead of silently freezing it mid-wave
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&S&&!S.ended&&!S.paused) $('#menubtn').click(); });
+// phones held sideways get the template's "turn your phone upright" card; pause the game underneath it
+try{ matchMedia('(orientation:landscape) and (max-height:500px) and (pointer:coarse)').addEventListener('change',e=>{ if(e.matches&&S&&!S.ended&&!S.paused) $('#menubtn').click(); }); }catch(e){}
+let last=performance.now();
+function frame(now){ const raw=Math.min(0.05,(now-last)/1000); last=now; tGlobal+=raw;
+  if(S&&!S.ended&&!S.paused){ let dt=raw*S.speed*KN.speed; if(S.down) dt*=0.33; if(S.slow>0){ S.slow-=raw; dt*=0.3; } update(dt); updateFx(raw);
+    const s=Math.max(0,Math.ceil(S.L.only&&S.mLeft!=null?S.mLeft:S.left)); $('#clock').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; $('#clock').style.textDecoration=S.passT<5?'underline':'none'; $('#budget').innerHTML=`<small>BUDGET</small>${Math.max(0,Math.round(S.budget))}`; $('#fbar i').style.width=S.stock+'%'; $('#fbar').className='bar'+(S.stock<30?' low':''); $('#pbar i').style.width=S.profit+'%'; const pips=$('#bj').children; for(let i=0;i<4;i++) pips[i].className=i<S.bj?'on':''; if((tGlobal*4|0)%2===0) paintLom(); }
+  else updateFx(raw);
+  draw(); flushOV(); paintSide(); requestAnimationFrame(frame); }
+resize(); title(); requestAnimationFrame(frame);
+window.ARMADA={REC,level:n=>{ LVL=n-1; start(); },LEVELS,save,state:()=>S,KN,start:()=>{start();},stroke:pts=>commitStroke(pts),P,S2M,inEEZ,fearAt:(u,v)=>fearAt(u,v),speed:n=>{ if(S) S.speed=n; },plane:()=>{ const [x,y]=P(S.air.hu,S.air.hv); tapAt({x,y}); },heli:r=>heliOn(r),bank:r=>bank(r),mission:i=>startMission(i),fire:id=>fireCard(CARDS.find(c=>c.id===id)),recall:k=>{ const A=k==='plane'?S.air:S.heli; if(A.state!=='port'&&A.state!=='refuel'){ A.state='home'; A.job=null; } },bounty:r=>postBounty(r),lom:letterOfMarque};
+
+</script>
+</body>
+</html>
